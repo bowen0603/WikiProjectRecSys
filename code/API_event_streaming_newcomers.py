@@ -53,11 +53,11 @@ class Streamer:
                     if change['wiki'] != "enwiki":
                         continue
 
-                    if change['type'] is not 'edit':
+                    if change['type'] != 'edit':
                         continue
 
-                    username = change.get('user')
-                    title = change.get('title')
+                    username = change.get('user').encode('utf-8')
+                    title = change.get('title').encode('utf-8')
                     timestamp = change.get('timestamp')
                     ns = change.get('namespace')
                     minor = 1 if change.get('minor') else 0
@@ -85,8 +85,10 @@ class Streamer:
                         # TODO: something is wrong here...
                         pass
 
-                    print("{},{},{},{},{},{},{}".format(username, wikiproject, type, title, ns, timestamp, minor),
+                    print("{}**{}**{}**{}**{}**{}**{}".format(username, wikiproject, type, title, ns, timestamp, minor),
                           file=self.fout)
+                    print("{}**{}**{}**{}**{}**{}**{}".format(username, wikiproject, type, title, ns, timestamp, minor))
+
                     self.fout.flush()
 
 
@@ -145,6 +147,9 @@ def main():
     streamer = Streamer(argv)
     streamer.read_files()
     streamer.streaming()
+
+    # python code/API_event_streaming_newcomers.py data/topic_based.csv data/bonds_based.csv data/rule_based.csv data/user_cf.csv data/newcomers.csv data/organizers.csv data/output.csv
+
 
 
 main()
