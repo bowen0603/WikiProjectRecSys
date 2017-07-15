@@ -1,6 +1,10 @@
 from __future__ import print_function
 __author__ = 'bobo'
 
+"""
+Purpose: Identify all the articles within the scope of a project by the category tag
+"""
+
 import requests
 # dir_name = "project_articles_pairs/"
 
