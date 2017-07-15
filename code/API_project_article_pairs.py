@@ -80,7 +80,8 @@ def obtain_project_articles(project_list, output_dir):
                     response = requests.get(construct_original_url(project)).json()
                     first_request = False
                 else:
-                    response = requests.get(construct_cont_url(project, wp_continue)).json()
+                    query = construct_cont_url(project, wp_continue)
+                    response = requests.get(query).json()
 
                 for article in response['query']['projects'][project]:
                     art_importance = article['assessment']['importance'].encode('utf-8').lower()
