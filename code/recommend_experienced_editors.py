@@ -17,9 +17,14 @@ class RecommendExperienced():
         self.list_active_editors = []
         self.list_bots = []
         self.list_sample_projects = []
+
         self.dict_editor_text_id = {}
         self.dict_editor_text_editcount = {}
         self.project_members = {}
+        self.project_pages = {}
+        self.project_talk_pages = {}
+        self.page_title_id = {}
+        self.project_contributors = {}
 
         self.exp_editor_thr = 100
 
@@ -105,17 +110,18 @@ class RecommendExperienced():
                         ns = usercontrib['ns']
                         userid = usercontrib['userid']
                         user = usercontrib['user']
-                        # TODO: check with userid to make sure same editor
+                        # TODO: find project related pages - if have a edit on a particular project, then skip it...
 
-                        # TODO: handle different pages
                         if ns == 0:
-                            # todo: get the user talk page
+                            # todo: parse article talk page for project
+                            # todo: create editor-project-editcount
                             pass
                         elif ns == 3:
-                            # which identify project member
+                            # todo: create a list of editors talked to
+                            # todo: connect with project members(contributors)
                             pass
                         else:
-                            # project it belongs to
+                            # todo: check and considered as project contributors
                             pass
                         # TODO: get the page
                         print("{},{},{},{}".format(user, userid, title, ns))
@@ -141,17 +147,45 @@ class RecommendExperienced():
         # parse the single page
         pass
 
+    def collect_project_related_pages(self):
+
+        # TODO: if the file exsits, then read from the files and skip making requests to generate data
+
+        print("### Collecting related pages of WikiProjects ###")
+        for project in self.list_sample_projects:
+
+            search_name = "Wikipedia:WikiProject " + project
+            set_project_pages = self.search_project_pages(search_name)
+            self.project_pages[project] = set_project_pages
+
+            search_name = "Wikipedia talk:WikiProject " + project
+            set_project_talk_pages = self.search_project_pages(search_name)
+            self.project_talk_pages[project] = set_project_talk_pages
+
+            print("Collected pages for WikiProject:{}. {} related pages.".format(project,
+                                                                                 len(set_project_pages)+
+                                                                                 len(set_project_talk_pages)))
+        print("\n\n")
+
+
 
     def identify_project_members(self):
+
+        # TODO: if the file exists, then read from the files and skip making requests to generate data
+        print("### Collecting members of WikiProjects ###")
         for project in self.list_sample_projects:
-            # search project talk pages
-            # search project pages
 
-            # pssearch=Wikipedia%3AWikiProject+Women+in+Red
+            contributors = set()
+            for page in self.project_pages[project]:
+                contributors = contributors.union(self.search_page_contributors(page))
 
-            contr_project_pages = self.search_project_pages(project)
-            contr_project_talk_pages = self.search_project_talk_pages(project)
-            self.project_members[project] = contr_project_pages + contr_project_talk_pages
+            for page in self.project_talk_pages[project]:
+                contributors = contributors.union(self.search_page_contributors(page))
+
+            self.project_contributors[project] = contributors
+            print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
+                                                                                        len(contributors)))
+        print("\n\n")
 
 
     def constr_original_page(self, page):
@@ -162,7 +196,7 @@ class RecommendExperienced():
         query = self.url_contributors + "pclimit=5&pccontinue=" + cont + "&titles=" + page
         return query
 
-    def search_page_contributors(self, page_id, page_title):
+    def search_page_contributors(self, page_title):
         first = True
         pccontinue = ""
         contributors = []
@@ -180,39 +214,29 @@ class RecommendExperienced():
                 response = requests.get(query).json()
                 pccontinue = response['continue']['pccontinue']
 
-                for editor in response['query']['pages'][str(page_id)]['contributors']:
+                for editor in response['query']['pages'][self.page_title_id(page_title)]['contributors']:
                     editor_text = editor['name']
                     editor_id = editor['userid']
                     contributors.append(editor_text)
 
             except KeyError:
-                if "error" in response:
-                    print("Code: {}; Info{}".format(response['error']['code'],
-                                                    response['error']['info']))
-
-                if "error" in response and response['error']['code'] == 'maxlag':
-                    ptime = max(5, int(response.headers['Retry-After']))
-                    print('WD API is lagged, waiting {} seconds to try again'.format(ptime))
-                    from time import sleep
-                    sleep(ptime)
+                if self.catch_error_to_sleep(response):
                     continue
-
-                break
+                else:
+                    break
 
         return contributors
 
 
-    def search_project_pages(self, project):
-        contributors = set()
-        search_name = "Wikipedia:WikiProject " + project
+    def search_project_pages(self, search_name):
         psoffset = "0"
+        list_project_pages = []
 
         while True:
             try:
                 # todo: change page limit
                 query = self.url_propages + "pslimit=5&psnamespace=4%7C5&psoffset=" + str(psoffset) + "&pssearch=" + search_name
                 response = requests.get(query).json()
-
                 psoffset = response['continue']['psoffset']
 
                 for page in response['query']['prefixsearch']:
@@ -220,31 +244,36 @@ class RecommendExperienced():
                     page_ns = page['ns']
                     page_title = page['title']
 
-                    values = self.search_page_contributors(page_id, page_title)
-                    set_value = set(values)
-                    contributors = contributors.union(set_value)
+                    self.page_title_id[page_title] = page_id
+                    list_project_pages.append(page_title)
+
+                    #values = self.search_page_contributors(page_id, page_title)
+                    #set_value = set(values)
+                    #contributors = contributors.union(set_value)
 
             except KeyError:
-                if "error" in response:
-                    print("Code: {}; Info{}".format(response['error']['code'],
-                                                    response['error']['info']))
-
-                if "error" in response and response['error']['code'] == 'maxlag':
-                    ptime = max(5, int(response.headers['Retry-After']))
-                    print('WD API is lagged, waiting {} seconds to try again'.format(ptime))
-                    from time import sleep
-                    sleep(ptime)
+                if self.catch_error_to_sleep(response):
                     continue
+                else:
+                    break
 
-                break
-
-        return contributors
-
-    def search_project_talk_pages(self, project):
-        contributors = []
-        return
+        return set(list_project_pages)
 
 
+    @staticmethod
+    def catch_error_to_sleep(response):
+        if "error" in response:
+            print("Code: {}; Info{}".format(response['error']['code'],
+                                            response['error']['info']))
+
+        if "error" in response and response['error']['code'] == 'maxlag':
+            ptime = max(5, int(response.headers['Retry-After']))
+            print('WD API is lagged, waiting {} seconds to try again'.format(ptime))
+            from time import sleep
+            sleep(ptime)
+            return True
+
+        return False
 
     @staticmethod
     def read_active_editors(file_editors):
@@ -275,6 +304,8 @@ class RecommendExperienced():
     def run(self):
         # self.identify_experienced_editor()
         # self.fetch_edit_history()
+        # self.identify_project_members()
+        self.collect_project_related_pages()
         self.identify_project_members()
 
 
