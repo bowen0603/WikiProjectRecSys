@@ -1,4 +1,5 @@
 from __future__ import print_function
+from page_parser import PageParser
 
 __author__ = 'bobo'
 
@@ -10,6 +11,7 @@ TODO: need to handle maximum request threshold and sleeping...
 import requests
 
 # todo: print out decode/encode problem...
+# todo: update the bot list
 
 class RecommendExperienced():
     def __init__(self, argv):
@@ -37,6 +39,8 @@ class RecommendExperienced():
         self.list_active_editors = self.read_active_editors(argv[1])
         self.list_sample_projects = self.read_sample_projects(argv[2])
         # self.list_bots = self.read_bot_list(argv[3])
+
+        self.parser_cat = PageParser()
 
 
     # query the active editors to obtain their total edits in Wikipedia
@@ -77,8 +81,8 @@ class RecommendExperienced():
 
 
     def constr_original_url(self, editor_text):
-        query = self.url_usercontb + "uclimit=5&ucnamespace=0%7C3%7C4%7C5&" \
-                                     "ucprop=title%7Ctimestamp%7Cparsedcomment%7Csizediff&ucuser=" + editor_text
+        query = self.url_usercontb + "uclimit=5&ucnamespace=0|3|4|5&" \
+                                     "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
         return query
 
     def fetch_edit_history(self):
@@ -86,6 +90,10 @@ class RecommendExperienced():
         uccontinue = ''
 
         for editor_text in self.dict_editor_text_id.keys():
+
+            # extract projects from userboxes
+            projects_userbox = self.parser_cat.extract_user_projects(editor_text)
+
             first = True
             cnt_page = 0
             while True:
@@ -107,15 +115,20 @@ class RecommendExperienced():
 
                     for usercontrib in response['query']['usercontribs']:
                         title = usercontrib['title']
+                        page_id = usercontrib['pageid'] # TODO check this..
                         ns = usercontrib['ns']
                         userid = usercontrib['userid']
                         user = usercontrib['user']
                         # TODO: find project related pages - if have a edit on a particular project, then skip it...
 
                         if ns == 0:
-                            # todo: parse article talk page for project
+                            # TODO: page id is ns 0 not ns 1 for talk pages
+                            projects = self.parser_cat.extract_article_projects(title)
+                            print(projects)
                             # todo: create editor-project-editcount
-                            pass
+                            # todo: handle extracted projects
+
+
                         elif ns == 3:
                             # todo: create a list of editors talked to
                             # todo: connect with project members(contributors)
@@ -263,7 +276,7 @@ class RecommendExperienced():
     @staticmethod
     def catch_error_to_sleep(response):
         if "error" in response:
-            print("Code: {}; Info{}".format(response['error']['code'],
+            print("Code: {}; Info {}".format(response['error']['code'],
                                             response['error']['info']))
 
         if "error" in response and response['error']['code'] == 'maxlag':
@@ -302,8 +315,8 @@ class RecommendExperienced():
         return list_bot
 
     def run(self):
-        # self.identify_experienced_editor()
-        # self.fetch_edit_history()
+        self.identify_experienced_editor()
+        self.fetch_edit_history()
         # self.identify_project_members()
         self.collect_project_related_pages()
         self.identify_project_members()
