@@ -11,6 +11,7 @@ Related APIs for different methods
 TODO: need to handle maximum request threshold and sleeping...
 """
 import requests
+from time import sleep
 
 # todo: print out decode/encode problem...
 # todo: update the bot list
@@ -410,12 +411,15 @@ class RecommendExperienced():
             print("Code: {}; Info {}".format(response['error']['code'],
                                             response['error']['info']))
 
-        if "error" in response and response['error']['code'] == 'maxlag':
-            ptime = max(5, int(response.headers['Retry-After']))
-            print('WD API is lagged, waiting {} seconds to try again'.format(ptime))
-            from time import sleep
-            sleep(ptime)
-            return True
+            if response['error']['code'] == 'maxlag':
+                ptime = max(5, int(response.headers['Retry-After']))
+                print('WD API is lagged, waiting {} seconds to try again'.format(ptime))
+                sleep(ptime)
+                return True
+
+            if response['error']['code'] == 'internal_api_error_DBQueryError':
+                sleep(5)
+                return True
 
         return False
 
