@@ -17,7 +17,6 @@ class PageParser:
 
             # a bit complicated nested data structure, but here only to extract page object
             page = list(response['query']['pages'].items())[0][1]
-            # page_id, page = next(pages.iteritems())
             page_ns = page['ns']
             page_text = page['revisions'][0]['*']
 
@@ -56,7 +55,6 @@ class PageParser:
 
             # a bit complicated nested data structure, but here only to extract page object
             page = list(response['query']['pages'].items())[0][1]
-            # page_id, page = next(pages.iteritems())
             page_ns = page['ns']
             page_text = page['revisions'][0]['*']
 

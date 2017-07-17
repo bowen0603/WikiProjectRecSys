@@ -108,10 +108,11 @@ class RecommendExperienced():
 
 
             first = True
+            continue_querying = True
             cnt_page = 0
             latest_datetime = datetime.fromordinal(1)
 
-            while True:
+            while continue_querying:
                 try:
                     # TODO: only for the most recent 1000 edits ???
                     cnt_page += 1
@@ -127,7 +128,11 @@ class RecommendExperienced():
                     #                              "ucprop=title%7Ctimestamp%7Cparsedcomment%7Csizediff&" \
                     #                              "ucuser=" + editor_text + "&uccontinue=" + uccontinue
                     response = requests.get(query).json()
-                    uccontinue = response['continue']['uccontinue']
+
+                    if 'continue' in response:
+                        uccontinue = response['continue']['uccontinue']
+                    else:
+                        continue_querying = False
 
                     for usercontrib in response['query']['usercontribs']:
                         page_title = usercontrib['title']
@@ -136,7 +141,7 @@ class RecommendExperienced():
                         userid = usercontrib['userid']
                         user_text = usercontrib['user']
 
-                        edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%S")
+                        edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
                         latest_datetime = max(edit_datetime, latest_datetime)
                         self.dict_editor_last_edit_datetime[user_text] = latest_datetime
 
@@ -232,41 +237,39 @@ class RecommendExperienced():
         return stats_edits_projects
 
     def collect_project_related_pages(self):
-
-        # TODO: if the file exsits, then read from the files and skip making requests to generate data
-
-        # read into a list; create into a set
         cwd = os.getcwd()
         # TODO: create file name
         fname = cwd + "/data/project_pages.csv"
+
         if os.path.isfile(fname):
             print("### Reading related pages of WikiProjects from file ###")
             for line in open(fname, 'r'):
-                project = line.split("**")
-                page = line.split('**')
+                project = line.split("**")[0].strip()
+                page = line.split('**')[1].strip()
                 if project in self.dict_project_sub_pages:
                     self.dict_project_sub_pages[project].append(page)
                 else:
                     self.dict_project_sub_pages[project] = [page]
         else:
             print("### Collecting related pages of WikiProjects, and writing into file ###")
+            fout = open(fname, 'w')
             for project in self.list_sample_projects:
                 search_name = "Wikipedia:WikiProject " + project
                 set_project_pages = self.search_project_pages(search_name)
-                self.dict_project_sub_pages[project] = set_project_pages
+                self.dict_project_sub_pages[project] = list(set_project_pages)
 
                 search_name = "Wikipedia talk:WikiProject " + project
                 set_project_talk_pages = self.search_project_pages(search_name)
-                self.dict_project_sub_talkpages[project] = set_project_talk_pages
+                self.dict_project_sub_talkpages[project] = list(set_project_talk_pages)
 
                 print("Collected pages for WikiProject:{}. {} related pages.".format(project,
                                                                                      len(set_project_pages)+
                                                                                      len(set_project_talk_pages)))
                 # write into file
                 for page in set_project_pages:
-                    print("{}**{}".format(project, page), file=open(fname, 'w'))
+                    print("{}**{}".format(project, page), file=fout)
                 for page in set_project_talk_pages:
-                    print("{}**{}".format(project, page), file=open(fname, 'a'))
+                    print("{}**{}".format(project, page), file=fout)
         print("\n\n")
 
 
@@ -279,66 +282,82 @@ class RecommendExperienced():
         if os.path.isfile(fname):
             print("### Reading members of WikiProjects from file ###")
             for line in open(fname, 'r'):
-                project = line.split('**')
-                contributor = line.split('**')
+                project = line.split('**')[0].strip()
+                contributor = line.split('**')[1].strip()
                 if project in self.dict_project_contributors:
                     self.dict_project_contributors[project].append(contributor)
                 else:
                     self.dict_project_contributors[project] = [contributor]
         else:
             print("### Collecting members of WikiProjects, and writing into file ###")
+            fout = open(fname, 'w')
             for project in self.list_sample_projects:
                 contributors = set()
-                for page in self.dict_project_sub_pages[project]:
-                    contributors = contributors.union(self.search_page_contributors(page))
+                if project in self.dict_project_sub_pages:
+                    contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_pages[project]))
 
-                for page in self.dict_project_sub_talkpages[project]:
-                    contributors = contributors.union(self.search_page_contributors(page))
+                if project in self.dict_project_sub_talkpages:
+                    contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_talkpages[project]))
 
                 self.dict_project_contributors[project] = contributors
                 print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
                                                                                             len(contributors)))
                 # write into files
                 for contributor in contributors:
-                    print("{}**{}".format(project, contributor), file=open(fname, 'w'))
+                    print("{}**{}".format(project, contributor), file=fout)
         print("\n\n")
 
 
-    def constr_original_page(self, page):
-        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&titles=" + page
+    def constr_original_page(self, pages):
+        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&titles=" + pages
         return query
 
-    def constr_next_page(self, page, cont):
-        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=" + cont + "&titles=" + page
+    def constr_next_page(self, pages, cont):
+        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=" + cont + "&titles=" + pages
         return query
 
-    def search_page_contributors(self, page_title):
-        first = True
-        pccontinue = ""
-        contributors = []
+    def search_page_contributors(self, page_titles):
 
-        while True:
-            try:
-                if first:
-                    query = self.constr_original_page(page_title)
-                    first = False
-                else:
-                    query = self.constr_next_page(page_title, pccontinue)
+        cnt_page, str_pages, pccontinue = 0, "", ""
+        contributors = set()
 
-                # query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=&titles=" + page_title
-                response = requests.get(query).json()
-                pccontinue = response['continue']['pccontinue']
+        # create a list of pages to request at the same time (50 maximum)
+        for page_title in page_titles:
+            if cnt_page < 45:
+                cnt_page += 1
+                str_pages += page_title + "|"
+            else:
+                first_request, continue_querying = True, True
+                while continue_querying:
+                    try:
+                        if first_request:
+                            query = self.constr_original_page(str_pages)
+                            first_request = False
+                        else:
+                            query = self.constr_next_page(str_pages, pccontinue)
 
-                for editor in response['query']['pages'][self.dict_page_title_id(page_title)]['contributors']:
-                    editor_text = editor['name']
-                    editor_id = editor['userid']
-                    contributors.append(editor_text)
+                        # query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=&titles=" + page_title
+                        response = requests.get(query).json()
+                        if 'continue' in response:
+                            pccontinue = response['continue']['pccontinue']
+                        else:
+                            continue_querying = False
 
-            except KeyError:
-                if self.catch_error_to_sleep(response):
-                    continue
-                else:
-                    break
+                        # a bit complicated nested data structure in response, but here only to extract page contributors
+                        pages_object = response['query']['pages']
+                        for page in pages_object.keys():
+                            if 'contributors' in pages_object[page]:
+                                for editor in pages_object[page]['contributors']:
+                                    editor_text = editor['name']
+                                    editor_id = editor['userid']
+                                    contributors.add(editor_text)
+
+                    except KeyError:
+                        if self.catch_error_to_sleep(response):
+                            continue
+                        else:
+                            break # TODO: not entirely sure about this terminal condition
+                cnt_page, str_pages = 0, ""
 
         return contributors
 
@@ -347,11 +366,15 @@ class RecommendExperienced():
         psoffset = "0"
         list_project_pages = []
 
-        while True:
+        continue_querying = True
+        while continue_querying:
             try:
                 query = self.url_propages + "pslimit="+str(self.const_max_requests)+"&psnamespace=4|5&psoffset=" + str(psoffset) + "&pssearch=" + search_name
                 response = requests.get(query).json()
-                psoffset = response['continue']['psoffset']
+                if 'continue' in response:
+                    psoffset = response['continue']['psoffset']
+                else:
+                    continue_querying = False
 
                 for page in response['query']['prefixsearch']:
                     page_id = page['pageid']
@@ -360,10 +383,6 @@ class RecommendExperienced():
 
                     self.dict_page_title_id[page_title] = page_id
                     list_project_pages.append(page_title)
-
-                    #values = self.search_page_contributors(page_id, page_title)
-                    #set_value = set(values)
-                    #contributors = contributors.union(set_value)
 
             except KeyError:
                 if self.catch_error_to_sleep(response):
