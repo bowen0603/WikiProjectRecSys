@@ -1,5 +1,7 @@
 from __future__ import print_function
 from page_parser import PageParser
+from datetime import datetime
+import os.path
 
 __author__ = 'bobo'
 
@@ -16,17 +18,25 @@ import requests
 class RecommendExperienced():
     def __init__(self, argv):
 
+        # TODO to chagne
+        self.const_recommendation_nbr = 20 # 20
+        self.const_max_requests = 500 # 500
+
         self.list_active_editors = []
         self.list_bots = []
         self.list_sample_projects = []
 
         self.dict_editor_text_id = {}
         self.dict_editor_text_editcount = {}
-        self.project_members = {}
-        self.project_pages = {}
-        self.project_talk_pages = {}
-        self.page_title_id = {}
-        self.project_contributors = {}
+        self.dict_editor_last_edit_datetime = {}
+        # computed by the contributors of project related pages
+        # self.dict_project_members = {}
+        self.dict_project_sub_pages = {}
+        self.dict_project_sub_talkpages = {}
+        self.dict_page_title_id = {}
+        self.dict_project_contributors = {}
+        # the projects an article within the scope of - parsed from article talk pages
+        self.dict_article_projects = {}
 
         self.exp_editor_thr = 100
 
@@ -37,7 +47,7 @@ class RecommendExperienced():
 
         self.debug = True
         self.list_active_editors = self.read_active_editors(argv[1])
-        self.list_sample_projects = self.read_sample_projects(argv[2])
+        self.list_sample_projects, self.dict_project_rule_based_recommendation = self.read_sample_projects(argv[2])
         # self.list_bots = self.read_bot_list(argv[3])
 
         self.parser_cat = PageParser()
@@ -51,10 +61,9 @@ class RecommendExperienced():
             # create a list of editors to request at the same time (50 maximum)
             if cnt_editor < 50:
                 cnt_editor += 1
-                str_editors += editor_text + "%7C"
+                str_editors += editor_text + "|"
             else:
                 query = self.url_userinfo + "&usprop=editcount&ususers=" + str_editors
-                # TODO: check query limit
                 for editor_info in requests.get(query).json()['query']['users']:
                     editor_text = editor_info['name']
                     editor_id = editor_info['userid']
@@ -74,30 +83,37 @@ class RecommendExperienced():
                                                                              len(self.dict_editor_text_id)))
 
     def constr_cont_url(self, editor_text, wpcont):
-        query = self.url_usercontb + "uclimit=5&ucnamespace=0%7C3%7C4%7C5&" \
-                                     "ucprop=title%7Ctimestamp%7Cparsedcomment%7Csizediff&ucuser=" + editor_text
+        query = self.url_usercontb + "uclimit="+str(self.const_max_requests)+"&ucnamespace=0|3|4|5&" \
+                                     "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
         query += "&uccontinue=" + wpcont
         return query
 
 
     def constr_original_url(self, editor_text):
-        query = self.url_usercontb + "uclimit=5&ucnamespace=0|3|4|5&" \
+        query = self.url_usercontb + "uclimit="+str(self.const_max_requests)+"&ucnamespace=0|3|4|5&" \
                                      "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
         return query
 
-    def fetch_edit_history(self):
+    def fetch_editing_history(self):
 
         uccontinue = ''
-
         for editor_text in self.dict_editor_text_id.keys():
+
+            edits_ns0_artiles = {}
+            edits_ns3_users = {}
+            edits_ns45_projects = {}
 
             # extract projects from userboxes
             projects_userbox = self.parser_cat.extract_user_projects(editor_text)
 
+
             first = True
             cnt_page = 0
+            latest_datetime = datetime.fromordinal(1)
+
             while True:
                 try:
+                    # TODO: only for the most recent 1000 edits ???
                     cnt_page += 1
                     if cnt_page == 3:
                         break
@@ -114,99 +130,186 @@ class RecommendExperienced():
                     uccontinue = response['continue']['uccontinue']
 
                     for usercontrib in response['query']['usercontribs']:
-                        title = usercontrib['title']
-                        page_id = usercontrib['pageid'] # TODO check this..
+                        page_title = usercontrib['title']
+                        page_id = usercontrib['pageid']
                         ns = usercontrib['ns']
                         userid = usercontrib['userid']
-                        user = usercontrib['user']
-                        # TODO: find project related pages - if have a edit on a particular project, then skip it...
+                        user_text = usercontrib['user']
 
+                        edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%S")
+                        latest_datetime = max(edit_datetime, latest_datetime)
+                        self.dict_editor_last_edit_datetime[user_text] = latest_datetime
+
+                        print("{},{},{},{}".format(user_text, userid, page_title, ns))
                         if ns == 0:
-                            # TODO: page id is ns 0 not ns 1 for talk pages
-                            projects = self.parser_cat.extract_article_projects(title)
-                            print(projects)
+                            edits_ns0_artiles[page_title] = 1 if page_title not in edits_ns0_artiles \
+                                else edits_ns0_artiles[page_title] + 1
+
+                            # projects = self.parser_cat.extract_article_projects(title)
+                            # print(projects)
                             # todo: create editor-project-editcount
                             # todo: handle extracted projects
-
-
                         elif ns == 3:
                             # todo: create a list of editors talked to
                             # todo: connect with project members(contributors)
-                            pass
+                            edits_ns3_users[page_title] = 1 if page_title not in edits_ns3_users \
+                                else edits_ns3_users[page_title] + 1
                         else:
                             # todo: check and considered as project contributors
-                            pass
-                        # TODO: get the page
-                        print("{},{},{},{}".format(user, userid, title, ns))
+                            edits_ns45_projects[page_title] = 1 if page_title not in edits_ns45_projects \
+                            else edits_ns45_projects[page_title] + 1
+                            # TODO: get the page
 
                 except KeyError:
-
-                    if "error" in response:
-                        print("Code: {}; Info{}".format(response['error']['code'],
-                                                        response['error']['info']))
-
-                    if "error" in response and response['error']['code'] == 'maxlag':
-                        ptime = max(5, int(response.headers['Retry-After']))
-                        print('WD API is lagged, waiting {} seconds to try again'.format(ptime))
-                        from time import sleep
-                        sleep(ptime)
+                    if self.catch_error_to_sleep(response):
                         continue
+                    else:
+                        break
 
-                    break
+            # end of fetching revisions of an editor
+            stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
+            print(stats_edits_projects_articles)
+            self.maintain_project_rule_based_recommendation_lists(user_text, stats_edits_projects_articles)
+
+            #TODO: insert sort to get topic editors who edited project related pages
+            stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
+            stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+
+    # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
+    def maintain_project_rule_based_recommendation_lists(self, user_text, stats_edits_projects_articles):
+        for project in self.dict_project_rule_based_recommendation.keys():
+
+            # skip if is project member TODO: or has userbox
+            if user_text in self.dict_project_contributors[project]:
+                continue
+
+            if project not in stats_edits_projects_articles:
+                continue
+
+            # insert the new editor
+            dict_recommended_editors = self.dict_project_rule_based_recommendation[project]
+            dict_recommended_editors[user_text] = stats_edits_projects_articles[project]
+
+            # sort the dict and remove the last one if there are more editors
+            import operator
+            list_recommended_editors_sorted = sorted(dict_recommended_editors.items(), key=operator.itemgetter(1))
+
+            if len(list_recommended_editors_sorted) > self.const_recommendation_nbr:
+                list_recommended_editors_sorted.reverse()
+                list_recommended_editors_sorted.pop()
+            self.dict_project_rule_based_recommendation[project] = dict(list_recommended_editors_sorted)
 
 
+    # computer article edits on the sample projects
+    def compute_project_article_edits(self, edits_article_pages):
 
-    def parse_revision_page(self):
-        # parse the single page
-        pass
+        stats_edits_project_articles = {}
+        for article in edits_article_pages:
+            cnt_edits = edits_article_pages[article]
+
+            # obtain the projects the article within the scope of
+            if article in self.dict_article_projects.keys():
+                projects = self.dict_article_projects[article]
+            else:
+                projects = self.parser_cat.extract_article_projects(article)
+                self.dict_article_projects[article] = projects
+
+            for project in projects:
+                if project not in self.list_sample_projects:
+                    continue
+
+                stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
+                                                    else stats_edits_project_articles[project] + cnt_edits
+
+        return stats_edits_project_articles
+
+    def compute_project_user_edits(self, edits_user_pages):
+        stats_edits_users = {}
+        return stats_edits_users
+
+    def compute_project_page_edits(self, edits_project_pages):
+        stats_edits_projects = {}
+        return stats_edits_projects
 
     def collect_project_related_pages(self):
 
         # TODO: if the file exsits, then read from the files and skip making requests to generate data
 
-        print("### Collecting related pages of WikiProjects ###")
-        for project in self.list_sample_projects:
+        # read into a list; create into a set
+        cwd = os.getcwd()
+        # TODO: create file name
+        fname = cwd + "/data/project_pages.csv"
+        if os.path.isfile(fname):
+            print("### Reading related pages of WikiProjects from file ###")
+            for line in open(fname, 'r'):
+                project = line.split("**")
+                page = line.split('**')
+                if project in self.dict_project_sub_pages:
+                    self.dict_project_sub_pages[project].append(page)
+                else:
+                    self.dict_project_sub_pages[project] = [page]
+        else:
+            print("### Collecting related pages of WikiProjects, and writing into file ###")
+            for project in self.list_sample_projects:
+                search_name = "Wikipedia:WikiProject " + project
+                set_project_pages = self.search_project_pages(search_name)
+                self.dict_project_sub_pages[project] = set_project_pages
 
-            search_name = "Wikipedia:WikiProject " + project
-            set_project_pages = self.search_project_pages(search_name)
-            self.project_pages[project] = set_project_pages
+                search_name = "Wikipedia talk:WikiProject " + project
+                set_project_talk_pages = self.search_project_pages(search_name)
+                self.dict_project_sub_talkpages[project] = set_project_talk_pages
 
-            search_name = "Wikipedia talk:WikiProject " + project
-            set_project_talk_pages = self.search_project_pages(search_name)
-            self.project_talk_pages[project] = set_project_talk_pages
-
-            print("Collected pages for WikiProject:{}. {} related pages.".format(project,
-                                                                                 len(set_project_pages)+
-                                                                                 len(set_project_talk_pages)))
+                print("Collected pages for WikiProject:{}. {} related pages.".format(project,
+                                                                                     len(set_project_pages)+
+                                                                                     len(set_project_talk_pages)))
+                # write into file
+                for page in set_project_pages:
+                    print("{}**{}".format(project, page), file=open(fname, 'w'))
+                for page in set_project_talk_pages:
+                    print("{}**{}".format(project, page), file=open(fname, 'a'))
         print("\n\n")
-
 
 
     def identify_project_members(self):
 
-        # TODO: if the file exists, then read from the files and skip making requests to generate data
-        print("### Collecting members of WikiProjects ###")
-        for project in self.list_sample_projects:
+        # read into a list; create into a set
+        cwd = os.getcwd()
+        # TODO: create file name
+        fname = cwd + "/data/project_members.csv"
+        if os.path.isfile(fname):
+            print("### Reading members of WikiProjects from file ###")
+            for line in open(fname, 'r'):
+                project = line.split('**')
+                contributor = line.split('**')
+                if project in self.dict_project_contributors:
+                    self.dict_project_contributors[project].append(contributor)
+                else:
+                    self.dict_project_contributors[project] = [contributor]
+        else:
+            print("### Collecting members of WikiProjects, and writing into file ###")
+            for project in self.list_sample_projects:
+                contributors = set()
+                for page in self.dict_project_sub_pages[project]:
+                    contributors = contributors.union(self.search_page_contributors(page))
 
-            contributors = set()
-            for page in self.project_pages[project]:
-                contributors = contributors.union(self.search_page_contributors(page))
+                for page in self.dict_project_sub_talkpages[project]:
+                    contributors = contributors.union(self.search_page_contributors(page))
 
-            for page in self.project_talk_pages[project]:
-                contributors = contributors.union(self.search_page_contributors(page))
-
-            self.project_contributors[project] = contributors
-            print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
-                                                                                        len(contributors)))
+                self.dict_project_contributors[project] = contributors
+                print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
+                                                                                            len(contributors)))
+                # write into files
+                for contributor in contributors:
+                    print("{}**{}".format(project, contributor), file=open(fname, 'w'))
         print("\n\n")
 
 
     def constr_original_page(self, page):
-        query = self.url_contributors + "pclimit=5&titles=" + page
+        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&titles=" + page
         return query
 
     def constr_next_page(self, page, cont):
-        query = self.url_contributors + "pclimit=5&pccontinue=" + cont + "&titles=" + page
+        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=" + cont + "&titles=" + page
         return query
 
     def search_page_contributors(self, page_title):
@@ -222,12 +325,11 @@ class RecommendExperienced():
                 else:
                     query = self.constr_next_page(page_title, pccontinue)
 
-                # todo: change page_title limit
-                # query = self.url_contributors + "pclimit=5&pccontinue=&titles=" + page_title
+                # query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=&titles=" + page_title
                 response = requests.get(query).json()
                 pccontinue = response['continue']['pccontinue']
 
-                for editor in response['query']['pages'][self.page_title_id(page_title)]['contributors']:
+                for editor in response['query']['pages'][self.dict_page_title_id(page_title)]['contributors']:
                     editor_text = editor['name']
                     editor_id = editor['userid']
                     contributors.append(editor_text)
@@ -247,8 +349,7 @@ class RecommendExperienced():
 
         while True:
             try:
-                # todo: change page limit
-                query = self.url_propages + "pslimit=5&psnamespace=4%7C5&psoffset=" + str(psoffset) + "&pssearch=" + search_name
+                query = self.url_propages + "pslimit="+str(self.const_max_requests)+"&psnamespace=4|5&psoffset=" + str(psoffset) + "&pssearch=" + search_name
                 response = requests.get(query).json()
                 psoffset = response['continue']['psoffset']
 
@@ -257,7 +358,7 @@ class RecommendExperienced():
                     page_ns = page['ns']
                     page_title = page['title']
 
-                    self.page_title_id[page_title] = page_id
+                    self.dict_page_title_id[page_title] = page_id
                     list_project_pages.append(page_title)
 
                     #values = self.search_page_contributors(page_id, page_title)
@@ -272,6 +373,17 @@ class RecommendExperienced():
 
         return set(list_project_pages)
 
+
+    def print_sample_messages(self):
+        fout = open("data/sample_recommendations.csv", "w")
+        print("wikiproject,user_text,user_id,project_edits,wp_edits,last_edit")
+        for project in self.list_sample_projects:
+            for user_text in self.dict_project_rule_based_recommendation[project]:
+                print("{},{},{},{},{},{}".format(wikiproject, user_text,
+                                                 self.dict_editor_text_id[user_text],
+                                                 self.dict_project_rule_based_recommendation[project][user_text],
+                                                 self.dict_editor_text_editcount[user_text],
+                                                 self.dict_editor_last_edit_datetime[user_text]), file=fout)
 
     @staticmethod
     def catch_error_to_sleep(response):
@@ -300,10 +412,12 @@ class RecommendExperienced():
     def read_sample_projects(file_project):
         # each line only contain an editor name
         list_projects = []
+        dict_project_rule_based_recommendation = {}
         for line in open(file_project, "r").readlines()[1:]:
             project = line.split(",")[0].replace("WikiProject_", "").replace("_", " ")
             list_projects.append(project)
-        return list_projects
+            dict_project_rule_based_recommendation[project] = {}
+        return list_projects, dict_project_rule_based_recommendation
 
     @staticmethod
     def read_bot_list(bot_file):
@@ -315,11 +429,16 @@ class RecommendExperienced():
         return list_bot
 
     def run(self):
-        self.identify_experienced_editor()
-        self.fetch_edit_history()
-        # self.identify_project_members()
+
+        # preprocess
         self.collect_project_related_pages()
         self.identify_project_members()
+        self.identify_experienced_editor()
+
+        # collect edits for recommendation
+        self.fetch_editing_history()
+
+
 
 
 def main():

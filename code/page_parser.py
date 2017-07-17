@@ -49,7 +49,6 @@ class PageParser:
 
 
     def extract_userboxes(self, user_name):
-        # WPMed
         try:
             user_name = "Doc James"
             query = self.url_user + user_name
@@ -85,6 +84,7 @@ class PageParser:
                 if template.name.startswith('WIR'):
                     wikiprojects.append("women in red")
 
+        print(wikiprojects)
         return wikiprojects
 
     def extract_user_projects(self, user_text):
