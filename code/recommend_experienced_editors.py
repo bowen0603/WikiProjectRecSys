@@ -49,7 +49,7 @@ class RecommendExperienced():
         self.debug = True
         self.list_active_editors = self.read_active_editors(argv[1])
         self.list_sample_projects, self.dict_project_rule_based_recommendation = self.read_sample_projects(argv[2])
-        # self.list_bots = self.read_bot_list(argv[3])
+        self.list_bots = self.read_bot_list(argv[3])
 
         self.parser_cat = PageParser()
 
@@ -60,12 +60,15 @@ class RecommendExperienced():
         for editor_text in self.list_active_editors:
 
             # create a list of editors to request at the same time (50 maximum)
-            if cnt_editor < 50:
+            if cnt_editor < 45:
                 cnt_editor += 1
                 str_editors += editor_text + "|"
             else:
                 query = self.url_userinfo + "&usprop=editcount&ususers=" + str_editors
                 for editor_info in requests.get(query).json()['query']['users']:
+                    if 'userid' not in editor_info:
+                        continue
+
                     editor_text = editor_info['name']
                     editor_id = editor_info['userid']
                     editor_editcount = editor_info['editcount']
@@ -252,6 +255,9 @@ class RecommendExperienced():
                     self.dict_project_sub_pages[project].append(page)
                 else:
                     self.dict_project_sub_pages[project] = [page]
+            for project in self.dict_project_sub_pages.keys():
+                print("Reading {} related pages for WikiProject: {}.".format(len(self.dict_project_sub_pages[project]),
+                                                                             project))
         else:
             print("### Collecting related pages of WikiProjects, and writing into file ###")
             fout = open(fname, 'w')
@@ -272,7 +278,7 @@ class RecommendExperienced():
                     print("{}**{}".format(project, page), file=fout)
                 for page in set_project_talk_pages:
                     print("{}**{}".format(project, page), file=fout)
-        print("\n\n")
+        print()
 
 
     def identify_project_members(self):
@@ -290,6 +296,9 @@ class RecommendExperienced():
                     self.dict_project_contributors[project].append(contributor)
                 else:
                     self.dict_project_contributors[project] = [contributor]
+            for project in self.dict_project_contributors.keys():
+                print("Reading {} contributors for WikiProject: {}.".format(len(self.dict_project_contributors[project]),
+                                                                            project))
         else:
             print("### Collecting members of WikiProjects, and writing into file ###")
             fout = open(fname, 'w')
@@ -307,7 +316,7 @@ class RecommendExperienced():
                 # write into files
                 for contributor in contributors:
                     print("{}**{}".format(project, contributor), file=fout)
-        print("\n\n")
+        print()
 
 
     def constr_original_page(self, pages):
@@ -400,7 +409,7 @@ class RecommendExperienced():
         print("wikiproject,user_text,user_id,project_edits,wp_edits,last_edit")
         for project in self.list_sample_projects:
             for user_text in self.dict_project_rule_based_recommendation[project]:
-                print("{},{},{},{},{},{}".format(wikiproject, user_text,
+                print("{},{},{},{},{},{}".format(wikiproject, user_text.encode('utf8'),
                                                  self.dict_editor_text_id[user_text],
                                                  self.dict_project_rule_based_recommendation[project][user_text],
                                                  self.dict_editor_text_editcount[user_text],
@@ -447,9 +456,9 @@ class RecommendExperienced():
     def read_bot_list(bot_file):
         # TODO: update the bot file
         # each line only contain an editor name
-        list_bot = []
+        list_bot = set()
         for line in open(bot_file, "r").readlines()[1:]:
-            list_bot.append(line.replace("\n", ""))
+            list_bot.add(line.strip())
         return list_bot
 
     def run(self):
