@@ -1,6 +1,7 @@
 __author__ = 'bobo'
 import mwparserfromhell as mwp
 import requests
+from time import sleep
 
 class PageParser:
 
@@ -25,6 +26,11 @@ class PageParser:
                 print("Error occurs when parsing article talk page. "
                       "Code: {}; Info {}".format(response['error']['code'],
                                                 response['error']['info']))
+        except requests.exceptions.ConnectionError:
+            print("Max retries exceeded with url.")
+            sleep(5)
+            return True
+
             return []
 
         wikicode = mwp.parse(page_text)

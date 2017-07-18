@@ -175,6 +175,10 @@ class RecommendExperienced():
                         continue
                     else:
                         break
+                except requests.exceptions.ConnectionError:
+                    print("Max retries exceeded with url.")
+                    sleep(5)
+                    continue
 
             # end of fetching revisions of an editor
             stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
@@ -368,6 +372,11 @@ class RecommendExperienced():
                             continue
                         else:
                             break # TODO: not entirely sure about this terminal condition
+                    except requests.exceptions.ConnectionError:
+                        print("Max retries exceeded with url.")
+                        sleep(5)
+                        continue
+
                 cnt_page, str_pages = 0, ""
 
         return contributors
@@ -400,6 +409,10 @@ class RecommendExperienced():
                     continue
                 else:
                     break
+            except requests.exceptions.ConnectionError:
+                print("Max retries exceeded with url.")
+                sleep(5)
+                continue
 
         return set(list_project_pages)
 
