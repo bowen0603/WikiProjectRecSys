@@ -75,7 +75,7 @@ class RecommendExperienced():
 
                     self.dict_editor_text_id[editor_text] = editor_id
                     self.dict_editor_text_editcount[editor_text] = editor_editcount
-                    print("{},{},{}".format(editor_text, editor_id, editor_editcount))
+                    # print("{},{},{}".format(editor_text, editor_id, editor_editcount))
 
                 cnt_editor, str_editors = 0, ""
                 if self.debug:
@@ -100,15 +100,16 @@ class RecommendExperienced():
         uccontinue = ''
         for editor_text in self.dict_editor_text_id.keys():
 
+            print("Retriving and analyzing the last 1000 edits of active experienced editer: {}.".format(editor_text))
+
             edits_ns0_artiles = {}
             edits_ns3_users = {}
             edits_ns45_projects = {}
 
-            # extract projects from userboxes
-            projects_userbox = self.parser_cat.extract_user_projects(editor_text)
+            # todo: extract projects from userboxes
+            # projects_userbox = self.parser_cat.extract_user_projects(editor_text)
 
-
-            first = True
+            first_query = True
             continue_querying = True
             cnt_page = 0
             latest_datetime = datetime.fromordinal(1)
@@ -119,9 +120,9 @@ class RecommendExperienced():
                     cnt_page += 1
                     if cnt_page == 3:
                         break
-                    if first:
+                    if first_query:
                         query = self.constr_original_url(editor_text)
-                        first=False
+                        first_query=False
                     else:
                         query = self.constr_cont_url(editor_text, uccontinue)
 
@@ -146,7 +147,7 @@ class RecommendExperienced():
                         latest_datetime = max(edit_datetime, latest_datetime)
                         self.dict_editor_last_edit_datetime[user_text] = latest_datetime
 
-                        print("{},{},{},{}".format(user_text, userid, page_title, ns))
+                        # print("{},{},{},{}".format(user_text, userid, page_title, ns))
                         if ns == 0:
                             edits_ns0_artiles[page_title] = 1 if page_title not in edits_ns0_artiles \
                                 else edits_ns0_artiles[page_title] + 1
@@ -175,7 +176,7 @@ class RecommendExperienced():
             # end of fetching revisions of an editor
             stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
             print(stats_edits_projects_articles)
-            self.maintain_project_rule_based_recommendation_lists(user_text, stats_edits_projects_articles)
+            self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
 
             #TODO: insert sort to get topic editors who edited project related pages
             stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
@@ -183,10 +184,10 @@ class RecommendExperienced():
 
     # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
     def maintain_project_rule_based_recommendation_lists(self, user_text, stats_edits_projects_articles):
-        for project in self.dict_project_rule_based_recommendation.keys():
+        for project in self.dict_project_contributors.keys():
 
             # skip if is project member TODO: or has userbox
-            if user_text in self.dict_project_contributors[project]:
+            if project in self.dict_project_contributors and user_text in self.dict_project_contributors[project]:
                 continue
 
             if project not in stats_edits_projects_articles:
@@ -460,6 +461,7 @@ class RecommendExperienced():
 
         # collect edits for recommendation
         self.fetch_editing_history()
+        self.print_sample_messages()
 
 
 

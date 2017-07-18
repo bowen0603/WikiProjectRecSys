@@ -82,7 +82,7 @@ class PageParser:
                 if template.name.startswith('WIR'):
                     wikiprojects.append("women in red")
 
-        print(wikiprojects)
+        # print(wikiprojects)
         return wikiprojects
 
     def extract_user_projects(self, user_text):
