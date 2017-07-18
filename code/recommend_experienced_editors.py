@@ -179,6 +179,9 @@ class RecommendExperienced():
                     print("Max retries exceeded with url.")
                     sleep(5)
                     continue
+                except:
+                    print("Throwing except: {}".format(response))
+                    continue
 
             # end of fetching revisions of an editor
             stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
@@ -376,6 +379,9 @@ class RecommendExperienced():
                         print("Max retries exceeded with url.")
                         sleep(5)
                         continue
+                    except:
+                        print("Throwing except: {}".format(response))
+                        continue
 
                 cnt_page, str_pages = 0, ""
 
@@ -413,6 +419,9 @@ class RecommendExperienced():
                 print("Max retries exceeded with url.")
                 sleep(5)
                 continue
+            except:
+                print("Throwing except: {}".format(response))
+                continue
 
         return set(list_project_pages)
 
@@ -420,11 +429,11 @@ class RecommendExperienced():
     def print_sample_messages(self):
         fout = open("data/sample_recommendations.csv", "w")
         print("wikiproject,user_text,user_id,project_edits,wp_edits,last_edit")
-        for project in self.list_sample_projects:
-            for user_text in self.dict_project_rule_based_recommendation[project]:
+        for wikiproject in self.list_sample_projects:
+            for user_text in self.dict_project_rule_based_recommendation[wikiproject]:
                 print("{},{},{},{},{},{}".format(wikiproject, user_text.encode('utf8'),
                                                  self.dict_editor_text_id[user_text],
-                                                 self.dict_project_rule_based_recommendation[project][user_text],
+                                                 self.dict_project_rule_based_recommendation[wikiproject][user_text],
                                                  self.dict_editor_text_editcount[user_text],
                                                  self.dict_editor_last_edit_datetime[user_text]), file=fout)
 

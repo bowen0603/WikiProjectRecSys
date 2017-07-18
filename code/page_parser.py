@@ -26,11 +26,13 @@ class PageParser:
                 print("Error occurs when parsing article talk page. "
                       "Code: {}; Info {}".format(response['error']['code'],
                                                 response['error']['info']))
+            return []
         except requests.exceptions.ConnectionError:
             print("Max retries exceeded with url.")
             sleep(5)
-            return True
-
+            return []
+        except:
+            print("Throwing except: {}".format(response))
             return []
 
         wikicode = mwp.parse(page_text)
