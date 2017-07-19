@@ -12,10 +12,11 @@
     <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredIdentifiers">
         <value>
-          <list size="3">
+          <list size="4">
             <item index="0" class="java.lang.String" itemvalue="object.register_cnt" />
             <item index="1" class="java.lang.String" itemvalue="object.NEW_USERS" />
             <item index="2" class="java.lang.String" itemvalue="object.*" />
+            <item index="3" class="java.lang.String" itemvalue="code.recommend_experienced_editors.page_parser" />
           </list>
         </value>
       </option>

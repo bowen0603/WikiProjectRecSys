@@ -7,7 +7,7 @@ __author__ = 'bobo'
 
 """
 Related APIs for different methods
-1. identify_experienced_editor(): https://www.mediawiki.org/w/api.php?action=help&modules=query%2Busers
+1. identify_newcomers_and_experienced_editors(): https://www.mediawiki.org/w/api.php?action=help&modules=query%2Busers
 TODO: need to handle maximum request threshold and sleeping...
 """
 import requests
@@ -21,6 +21,7 @@ class RecommendExperienced():
         # TODO to chagne
         self.const_recommendation_nbr = 20 # 20
         self.const_max_requests = 500 # 500
+        self.constr_newcomer_days = 10
 
         self.list_active_editors = []
         self.list_bots = []
@@ -37,6 +38,9 @@ class RecommendExperienced():
         self.dict_project_contributors = {}
         # the projects an article within the scope of - parsed from article talk pages
         self.dict_article_projects = {}
+        self.dict_newcomer_text_id = {}
+        self.dict_editor_regstr_time = {}
+        self.dict_newcomer_editcount = {}
 
         self.exp_editor_thr = 100
 
@@ -47,15 +51,15 @@ class RecommendExperienced():
 
         self.debug = True
         self.list_active_editors = self.read_active_editors(argv[1])
-        self.list_sample_projects, self.dict_project_rule_based_recommendation = self.read_sample_projects(argv[2])
+        self.list_sample_projects, self.dict_project_rule_based_recommendation, self.dict_project_newcomer_edits = self.read_sample_projects(argv[2])
         self.list_bots = self.read_bot_list(argv[3])
 
         self.parser_cat = PageParser()
 
 
     # query the active editors to obtain their total edits in Wikipedia
-    def identify_experienced_editor(self):
-        print("### Identifying active, experienced editors to recommend ###")
+    def identify_newcomers_and_experienced_editors(self):
+        print("### Identifying newcomers and active experienced editors to recommend ###")
 
         cnt_editor, str_editors = 0, ""
         for editor_text in self.list_active_editors:
@@ -65,7 +69,7 @@ class RecommendExperienced():
                 cnt_editor += 1
                 str_editors += editor_text + "|"
             else:
-                query = self.url_userinfo + "&usprop=editcount&ususers=" + str_editors
+                query = self.url_userinfo + "&usprop=editcount|registration&ususers=" + str_editors
                 for editor_info in requests.get(query).json()['query']['users']:
                     if 'userid' not in editor_info:
                         continue
@@ -73,41 +77,52 @@ class RecommendExperienced():
                     editor_text = editor_info['name']
                     editor_id = editor_info['userid']
                     editor_editcount = editor_info['editcount']
+                    editor_regstr_ts = editor_info['registration']
 
-                    if editor_editcount < self.exp_editor_thr or editor_text in self.list_bots:
-                        continue
+                    if editor_regstr_ts is None:
+                        delta_days = self.constr_newcomer_days + 1
+                    else:
+                        regstr_datetime = datetime.strptime(editor_regstr_ts, "%Y-%m-%dT%H:%M:%SZ")
+                        delta_days = (datetime.now() - regstr_datetime).days
 
-                    self.dict_editor_text_id[editor_text] = editor_id
-                    self.dict_editor_text_editcount[editor_text] = editor_editcount
+                    # collect data for newcomers
+                    if delta_days <= self.constr_newcomer_days and editor_text not in self.list_bots:
+                        self.dict_newcomer_text_id[editor_text] = editor_id
+                        self.dict_newcomer_editcount[editor_text] = editor_editcount
+
+                        self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+
+                    # collect data for experienced editors
+                    if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
+                        self.dict_editor_text_id[editor_text] = editor_id
+                        self.dict_editor_text_editcount[editor_text] = editor_editcount
+
+                        self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+
                     # print("{},{},{}".format(editor_text, editor_id, editor_editcount))
 
                 cnt_editor, str_editors = 0, ""
                 if self.debug:
                     break
-        print("Number of active editors: {}; experienced editors: {}".format(len(self.list_active_editors),
-                                                                             len(self.dict_editor_text_id)))
+        print("Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
+                                                                                          len(self.dict_editor_text_id),
+                                                                                          len(self.dict_newcomer_text_id)))
 
-    def constr_cont_url(self, editor_text, wpcont):
-        query = self.url_usercontb + "uclimit="+str(self.const_max_requests)+"&ucnamespace=0|3|4|5&" \
-                                     "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
-        query += "&uccontinue=" + wpcont
-        return query
+    def fetch_newcomers_and_experienced_editors_history(self):
+        print("#### Working newcomers... ####")
+        self.fetch_history(self.dict_newcomer_text_id.keys(), True)
+
+        print("#### Working experienced editors... ####")
+        self.fetch_history(self.dict_editor_text_id.keys(), False)
 
 
-    def constr_original_url(self, editor_text):
-        query = self.url_usercontb + "uclimit="+str(self.const_max_requests)+"&ucnamespace=0|3|4|5&" \
-                                     "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
-        return query
+    def fetch_history(self, editor_list, is_newcomers):
 
-    def fetch_editing_history(self):
-
-        uccontinue = ''
         editor_cnt = 0
-        for editor_text in self.dict_editor_text_id.keys():
-
-            print("#{}. Retriving and analyzing the last 1000 edits of active experienced editer: {}.".format(editor_cnt,
-                                                                                                              editor_text))
+        for editor_text in editor_list:
+            print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
             editor_cnt += 1
+            latest_datetime = datetime.fromordinal(1)
 
             edits_ns0_artiles = {}
             edits_ns3_users = {}
@@ -116,85 +131,66 @@ class RecommendExperienced():
             # todo: extract projects from userboxes
             # projects_userbox = self.parser_cat.extract_user_projects(editor_text)
 
-            first_query = True
-            continue_querying = True
-            cnt_page = 0
-            latest_datetime = datetime.fromordinal(1)
+            # Just fetch 500 edits using one query for each editor
+            try:
+                query = self.url_usercontb + "uclimit="+str(self.const_max_requests)+"&ucnamespace=0|3|4|5&" \
+                                     "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
+                response = requests.get(query).json()
 
-            while continue_querying:
-                try:
-                    # TODO: only for the most recent 1000 edits ???
-                    cnt_page += 1
-                    if cnt_page == 3:
-                        break
-                    if first_query:
-                        query = self.constr_original_url(editor_text)
-                        first_query=False
-                    else:
-                        query = self.constr_cont_url(editor_text, uccontinue)
+                for usercontrib in response['query']['usercontribs']:
+                    page_title = usercontrib['title']
+                    page_id = usercontrib['pageid']
+                    ns = usercontrib['ns']
+                    userid = usercontrib['userid']
+                    user_text = usercontrib['user']
 
-                    # query = self.url_usercontb + "ucnamespace=0%7C3%7C4%7C5&" \
-                    #                              "ucprop=title%7Ctimestamp%7Cparsedcomment%7Csizediff&" \
-                    #                              "ucuser=" + editor_text + "&uccontinue=" + uccontinue
-                    response = requests.get(query).json()
+                    edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
+                    latest_datetime = max(edit_datetime, latest_datetime)
+                    self.dict_editor_last_edit_datetime[user_text] = latest_datetime
 
-                    if 'continue' in response:
-                        uccontinue = response['continue']['uccontinue']
-                    else:
-                        continue_querying = False
+                    # print("{},{},{},{}".format(user_text, userid, page_title, ns))
+                    if ns == 0:
+                        edits_ns0_artiles[page_title] = 1 if page_title not in edits_ns0_artiles \
+                            else edits_ns0_artiles[page_title] + 1
 
-                    for usercontrib in response['query']['usercontribs']:
-                        page_title = usercontrib['title']
-                        page_id = usercontrib['pageid']
-                        ns = usercontrib['ns']
-                        userid = usercontrib['userid']
-                        user_text = usercontrib['user']
-
-                        edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
-                        latest_datetime = max(edit_datetime, latest_datetime)
-                        self.dict_editor_last_edit_datetime[user_text] = latest_datetime
-
-                        # print("{},{},{},{}".format(user_text, userid, page_title, ns))
-                        if ns == 0:
-                            edits_ns0_artiles[page_title] = 1 if page_title not in edits_ns0_artiles \
-                                else edits_ns0_artiles[page_title] + 1
-
-                            # projects = self.parser_cat.extract_article_projects(title)
-                            # print(projects)
-                            # todo: create editor-project-editcount
-                            # todo: handle extracted projects
-                        elif ns == 3:
-                            # todo: create a list of editors talked to
-                            # todo: connect with project members(contributors)
+                    elif ns == 3:
+                        # todo: create a list of editors talked to
+                        # todo: connect with project members(contributors)
+                        if not is_newcomers:
                             edits_ns3_users[page_title] = 1 if page_title not in edits_ns3_users \
-                                else edits_ns3_users[page_title] + 1
-                        else:
-                            # todo: check and considered as project contributors
+                            else edits_ns3_users[page_title] + 1
+                    else:
+                        # todo: check and considered as project contributors
+                        if not is_newcomers:
                             edits_ns45_projects[page_title] = 1 if page_title not in edits_ns45_projects \
                             else edits_ns45_projects[page_title] + 1
-                            # TODO: get the page
+                        # TODO: get the page
 
-                except KeyError:
-                    if self.catch_error_to_sleep(response):
-                        continue
-                    else:
-                        break
-                except requests.exceptions.ConnectionError:
-                    print("Max retries exceeded with url.")
-                    sleep(5)
+            except KeyError:
+                if self.catch_error_to_sleep(response):
                     continue
-                except:
-                    print("Throwing except: {}".format(response))
-                    continue
+                else:
+                    break
+            except requests.exceptions.ConnectionError:
+                print("Max retries exceeded with url.")
+                sleep(5)
+                continue
+            except:
+                print("Throwing except: {}".format(response))
+                continue
 
-            # end of fetching revisions of an editor
-            stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
-            print(stats_edits_projects_articles)
-            self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
+            if is_newcomers:
+                stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
+                self.add_project_newcomer_lists(user_text, stats_edits_projects_articles)
+            else:
+                # end of fetching revisions of an editor
+                stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
+                self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
 
-            #TODO: insert sort to get topic editors who edited project related pages
-            stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
-            stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+                #TODO: insert sort to get topic editors who edited project related pages
+                stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
+                stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+
 
     # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
     def maintain_project_rule_based_recommendation_lists(self, user_text, stats_edits_projects_articles):
@@ -220,6 +216,11 @@ class RecommendExperienced():
                 list_recommended_editors_sorted.pop()
             self.dict_project_rule_based_recommendation[project] = dict(list_recommended_editors_sorted)
 
+    def add_project_newcomer_lists(self, editor_text, stats_edits_projects_articles):
+        for project in stats_edits_projects_articles.keys():
+            project_members = self.dict_project_newcomer_edits[project]
+            # get the edits within the project
+            project_members[editor_text] = stats_edits_projects_articles[project]
 
     # computer article edits on the sample projects
     def compute_project_article_edits(self, edits_article_pages):
@@ -430,16 +431,31 @@ class RecommendExperienced():
         return set(list_project_pages)
 
 
-    def print_sample_messages(self):
-        fout = open("data/sample_recommendations.csv", "w")
-        print("wikiproject,user_text,user_id,project_edits,wp_edits,last_edit", file=fout)
+    def write_rule_recommendations(self):
+
+        fout = open("data/rule_recommendations.csv", "w")
+        print("wikiproject,editor_text,user_id,project_edits,wp_edits,last_edit,regstr_time", file=fout)
         for wikiproject in self.list_sample_projects:
-            for user_text in self.dict_project_rule_based_recommendation[wikiproject]:
-                print("{},{},{},{},{},{}".format(wikiproject, user_text,
-                                                 self.dict_editor_text_id[user_text],
-                                                 self.dict_project_rule_based_recommendation[wikiproject][user_text],
-                                                 self.dict_editor_text_editcount[user_text],
-                                                 self.dict_editor_last_edit_datetime[user_text]), file=fout)
+            for editor_text in self.dict_project_rule_based_recommendation[wikiproject]:
+                print("{},{},{},{},{},{},{}".format(wikiproject, editor_text,
+                                                    self.dict_editor_text_id[editor_text],
+                                                    self.dict_project_rule_based_recommendation[wikiproject][editor_text],
+                                                    self.dict_editor_text_editcount[editor_text],
+                                                    self.dict_editor_last_edit_datetime[editor_text],
+                                                    self.dict_editor_last_edit_datetime[editor_text]), file=fout)
+
+    def write_newcomer_recommendations(self):
+
+        fout = open("data/sample_newcomers.csv", "w")
+        print("wikiproject,user_text,user_id,project,project_edits,wp_edits,last_edit,regstr_time", file=fout)
+        for wikiproject in self.dict_project_newcomer_edits.keys():
+            for editor_text in self.dict_project_newcomer_edits[wikiproject]:
+                print("{},{},{},{},{},{},{},{}".format(wikiproject, editor_text,
+                                                       self.dict_editor_text_id[editor_text],
+                                                       self.dict_project_newcomer_edits[wikiproject][editor_text],
+                                                       self.dict_newcomer_editcount[editor_text],
+                                                       self.dict_editor_last_edit_datetime[editor_text],
+                                                       self.dict_editor_regstr_time[editor_text]), file=format())
 
     @staticmethod
     def catch_error_to_sleep(response):
@@ -472,11 +488,14 @@ class RecommendExperienced():
         # each line only contain an editor name
         list_projects = []
         dict_project_rule_based_recommendation = {}
+        dict_project_newcomer_edits = {}
+
         for line in open(file_project, "r").readlines()[1:]:
             project = line.split(",")[0].replace("WikiProject_", "").replace("_", " ")
             list_projects.append(project)
             dict_project_rule_based_recommendation[project] = {}
-        return list_projects, dict_project_rule_based_recommendation
+            dict_project_newcomer_edits[project] = {}
+        return list_projects, dict_project_rule_based_recommendation, dict_project_newcomer_edits
 
     @staticmethod
     def read_bot_list(bot_file):
@@ -492,11 +511,13 @@ class RecommendExperienced():
         # preprocess
         self.collect_project_related_pages()
         self.identify_project_members()
-        self.identify_experienced_editor()
+        self.identify_newcomers_and_experienced_editors()
 
         # collect edits for recommendation
-        self.fetch_editing_history()
-        self.print_sample_messages()
+        self.fetch_newcomers_and_experienced_editors_history()
+
+        self.write_rule_recommendations()
+        self.write_newcomer_recommendations()
 
 
 
@@ -510,5 +531,7 @@ def main():
     rec_exp = RecommendExperienced(argv)
     rec_exp.run()
 
-
+import time
+start_time = time.time()
 main()
+print("--- {} hours ---".format(1.0*(time.time() - start_time)/3600))
