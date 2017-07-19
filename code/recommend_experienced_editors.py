@@ -14,7 +14,6 @@ import requests
 from time import sleep
 
 # todo: print out decode/encode problem...
-# todo: update the bot list
 
 class RecommendExperienced():
     def __init__(self, argv):
@@ -56,6 +55,8 @@ class RecommendExperienced():
 
     # query the active editors to obtain their total edits in Wikipedia
     def identify_experienced_editor(self):
+        print("### Identifying active, experienced editors to recommend ###")
+
         cnt_editor, str_editors = 0, ""
         for editor_text in self.list_active_editors:
 
@@ -101,9 +102,12 @@ class RecommendExperienced():
     def fetch_editing_history(self):
 
         uccontinue = ''
+        editor_cnt = 0
         for editor_text in self.dict_editor_text_id.keys():
 
-            print("Retriving and analyzing the last 1000 edits of active experienced editer: {}.".format(editor_text))
+            print("#{}. Retriving and analyzing the last 1000 edits of active experienced editer: {}.".format(editor_cnt,
+                                                                                                              editor_text))
+            editor_cnt += 1
 
             edits_ns0_artiles = {}
             edits_ns3_users = {}
@@ -428,10 +432,10 @@ class RecommendExperienced():
 
     def print_sample_messages(self):
         fout = open("data/sample_recommendations.csv", "w")
-        print("wikiproject,user_text,user_id,project_edits,wp_edits,last_edit")
+        print("wikiproject,user_text,user_id,project_edits,wp_edits,last_edit", file=fout)
         for wikiproject in self.list_sample_projects:
             for user_text in self.dict_project_rule_based_recommendation[wikiproject]:
-                print("{},{},{},{},{},{}".format(wikiproject, user_text.encode('utf8'),
+                print("{},{},{},{},{},{}".format(wikiproject, user_text,
                                                  self.dict_editor_text_id[user_text],
                                                  self.dict_project_rule_based_recommendation[wikiproject][user_text],
                                                  self.dict_editor_text_editcount[user_text],
