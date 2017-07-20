@@ -242,14 +242,13 @@ class RecommendExperienced():
 
             # obtain the projects the article within the scope of
             if article in self.dict_article_projects.keys():
-
                 projects = self.dict_article_projects[article]
                 if projects[0] == 'NONE':
                     continue
             else:
                 # TODO: write this into a file: this is static..
                 projects = self.parser_cat.extract_article_projects(article)
-                self.dict_article_projects[article] = projects
+                # self.dict_article_projects[article] = projects
 
                 # write into a file
 
@@ -259,11 +258,17 @@ class RecommendExperienced():
                     continue
                 has_sample_projects = True
 
+                if article in self.dict_article_projects:
+                    self.dict_article_projects[article].append(project)
+                else:
+                    self.dict_article_projects[article] = [project]
+
                 print("{}**{}".format(article, project), file=self.fout_art_proj)
                 stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
                                                     else stats_edits_project_articles[project] + cnt_edits
 
             if not has_sample_projects:
+                self.dict_article_projects[article] = ["NONE"]
                 print("{}**{}".format(article, "NONE"), file=self.fout_art_proj)
             self.fout_art_proj.flush()
 
