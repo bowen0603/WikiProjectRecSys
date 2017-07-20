@@ -21,7 +21,7 @@ class RecommendExperienced():
         # TODO to chagne
         self.const_recommendation_nbr = 20 # 20
         self.const_max_requests = 500 # 500
-        self.constr_newcomer_days = 10
+        self.constr_newcomer_days = 3
 
         self.list_active_editors = []
         self.list_bots = []
@@ -36,8 +36,7 @@ class RecommendExperienced():
         self.dict_project_sub_talkpages = {}
         self.dict_page_title_id = {}
         self.dict_project_contributors = {}
-        # the projects an article within the scope of - parsed from article talk pages
-        self.dict_article_projects = {}
+
         self.dict_newcomer_text_id = {}
         self.dict_editor_regstr_time = {}
         self.dict_newcomer_editcount = {}
@@ -55,6 +54,10 @@ class RecommendExperienced():
         self.list_bots = self.read_bot_list(argv[3])
 
         self.parser_cat = PageParser()
+
+        # the projects an article within the scope of - parsed from article talk pages
+        self.dict_article_projects = self.read_artile_projects(argv[4])
+        self.fout_art_proj = open(argv[4], 'a')
 
 
     # query the active editors to obtain their total edits in Wikipedia
@@ -109,15 +112,17 @@ class RecommendExperienced():
                                                                                           len(self.dict_newcomer_text_id)))
 
     def fetch_newcomers_and_experienced_editors_history(self):
-        print("#### Working newcomers... ####")
+        print("#### Working on newcomers... ####")
         self.fetch_history(self.dict_newcomer_text_id.keys(), True)
 
-        print("#### Working experienced editors... ####")
+        print("#### Working on experienced editors... ####")
         self.fetch_history(self.dict_editor_text_id.keys(), False)
 
 
     def fetch_history(self, editor_list, is_newcomers):
 
+        # TODO: write members that are done fetching into a file with the latest timestamp
+        # TODO: write the articles editor edited into files to fasten the process
         editor_cnt = 0
         for editor_text in editor_list:
             print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
@@ -185,11 +190,17 @@ class RecommendExperienced():
             else:
                 # end of fetching revisions of an editor
                 stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
-                self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
+                self.maintain_project_rule_based_recommendation_lists(user_text, stats_edits_projects_articles)
 
                 #TODO: insert sort to get topic editors who edited project related pages
-                stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
-                stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+                # stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
+                # editor - project - talk
+                # TODO: bonds-based recommendations
+                # projects_editor_communicated_with = self.get_project_member_talks(stats_edits_projects_users)
+
+                # editor - project - edits
+                # TODO: identify himself as project contributor
+                # stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
 
 
     # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
@@ -231,26 +242,61 @@ class RecommendExperienced():
 
             # obtain the projects the article within the scope of
             if article in self.dict_article_projects.keys():
+
                 projects = self.dict_article_projects[article]
+                if projects[0] == 'NONE':
+                    continue
             else:
+                # TODO: write this into a file: this is static..
                 projects = self.parser_cat.extract_article_projects(article)
                 self.dict_article_projects[article] = projects
 
+                # write into a file
+
+            has_sample_projects = False
             for project in projects:
                 if project not in self.list_sample_projects:
                     continue
+                has_sample_projects = True
 
+                print("{}**{}".format(article, project), file=self.fout_art_proj)
                 stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
                                                     else stats_edits_project_articles[project] + cnt_edits
 
+            if not has_sample_projects:
+                print("{}**{}".format(article, "NONE"), file=self.fout_art_proj)
+            self.fout_art_proj.flush()
+
         return stats_edits_project_articles
 
+    # handle user talk pages (ns 3)
     def compute_project_user_edits(self, edits_user_pages):
         stats_edits_users = {}
+        for page in edits_user_pages:
+            cnt_edits = edits_user_pages[page]
+            user_text = page.replace("User talk:", "")
+
+            for project in self.list_sample_projects:
+                if project in self.dict_project_contributors and user_text not in self.dict_project_contributors[project]:
+                    continue
+                stats_edits_users[project] = cnt_edits if project not in stats_edits_users \
+                                                    else stats_edits_users[project] + cnt_edits
+
         return stats_edits_users
 
+    # handle project talk pages (ns 4 and 5)
     def compute_project_page_edits(self, edits_project_pages):
         stats_edits_projects = {}
+        for page in edits_project_pages:
+            cnt_edits = edits_project_pages[page]
+
+            for project in self.list_sample_projects:
+                if project in self.dict_project_contributors and page not in self.dict_project_sub_talkpages[project]:
+                    continue
+
+                stats_edits_projects[project] = cnt_edits if project not in stats_edits_projects \
+                                                else stats_edits_projects[project] + cnt_edits
+
         return stats_edits_projects
 
     def collect_project_related_pages(self):
@@ -437,7 +483,7 @@ class RecommendExperienced():
         print("wikiproject,editor_text,user_id,project_edits,wp_edits,last_edit,regstr_time", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_project_rule_based_recommendation[wikiproject]:
-                print("{},{},{},{},{},{},{}".format(wikiproject, editor_text,
+                print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                     self.dict_editor_text_id[editor_text],
                                                     self.dict_project_rule_based_recommendation[wikiproject][editor_text],
                                                     self.dict_editor_text_editcount[editor_text],
@@ -450,12 +496,25 @@ class RecommendExperienced():
         print("wikiproject,user_text,user_id,project,project_edits,wp_edits,last_edit,regstr_time", file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
-                print("{},{},{},{},{},{},{},{}".format(wikiproject, editor_text,
+                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                        self.dict_editor_text_id[editor_text],
                                                        self.dict_project_newcomer_edits[wikiproject][editor_text],
                                                        self.dict_newcomer_editcount[editor_text],
                                                        self.dict_editor_last_edit_datetime[editor_text],
                                                        self.dict_editor_regstr_time[editor_text]), file=format())
+
+    @staticmethod
+    def read_artile_projects(filename):
+        article_projects = {}
+        if os.path.isfile(filename):
+            for line in open(filename, 'r'):
+                article = line.split("**")[0]
+                project = line.split("**")[1].strip()
+                if article in article_projects:
+                    article_projects[article].append(project)
+                else:
+                    article_projects[article] = [project]
+        return article_projects
 
     @staticmethod
     def catch_error_to_sleep(response):
@@ -525,7 +584,7 @@ class RecommendExperienced():
 def main():
     from sys import argv
     # if len(argv) != 2:
-    # print("Usage: <active_editors> <bot_list>")
+    # print("Usage: <active_editors> <sample_projects> <bot_list> <article_projects>")
     #     return
 
     rec_exp = RecommendExperienced(argv)

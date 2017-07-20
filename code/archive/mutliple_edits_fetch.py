@@ -102,3 +102,37 @@ self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_p
 #TODO: insert sort to get topic editors who edited project related pages
 stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
 stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+
+
+def print_redirects(config_file):
+    '''
+    Read in the WikiProject configuration file and snapshot,
+    identify redirects and print out a wikitable.
+    :param config_file: path to the WikiProject YAML configuration file
+    :type config_file: str
+    '''
+
+    with open(config_file, 'r') as infile:
+        proj_conf = yaml.load(infile)
+
+    all_pages = wp.read_snapshot(proj_conf['snapshot file'])
+
+    ## Build a wikitable and print it out
+    wikitable = '''{| class="wikitable sortable"
+|-
+! scope="col" style="width: 40%;" | Title (and talk)
+! Rating
+! Notes'''
+
+    for page in all_pages:
+        if page.is_redirect == "1":
+            wikitable = '''{0}
+|-
+| [[{1}]] <small>([[Talk:{1}]])</small>
+| {2}
+| '''.format(wikitable, page.talk_page_title.replace("_", " "), page.importance_rating)
+
+    print(wikitable + "\n|}")
+
+    # ok, done
+    return()
