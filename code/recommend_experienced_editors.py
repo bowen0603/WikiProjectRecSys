@@ -21,7 +21,7 @@ class RecommendExperienced():
         # TODO to chagne
         self.const_recommendation_nbr = 20 # 20
         self.const_max_requests = 500 # 500
-        self.constr_newcomer_days = 3
+        self.constr_newcomer_days = 10
 
         self.list_active_editors = []
         self.list_bots = []
@@ -79,35 +79,49 @@ class RecommendExperienced():
                 cnt_editor += 1
                 str_editors += editor_text + "|"
             else:
-                query = self.url_userinfo + "&usprop=editcount|registration&ususers=" + str_editors
-                for editor_info in requests.get(query).json()['query']['users']:
-                    if 'userid' not in editor_info:
+                try:
+                    query = self.url_userinfo + "&usprop=editcount|registration&ususers=" + str_editors
+                    response = requests.get(query).json()
+                    for editor_info in response['query']['users']:
+                        if 'userid' not in editor_info:
+                            continue
+
+                        editor_text = editor_info['name']
+                        editor_id = editor_info['userid']
+                        editor_editcount = editor_info['editcount']
+                        editor_regstr_ts = editor_info['registration']
+
+                        if editor_regstr_ts is None:
+                            delta_days = self.constr_newcomer_days + 1
+                        else:
+                            regstr_datetime = datetime.strptime(editor_regstr_ts, "%Y-%m-%dT%H:%M:%SZ")
+                            delta_days = (datetime.now() - regstr_datetime).days
+
+                        # collect data for newcomers
+                        if delta_days <= self.constr_newcomer_days and editor_text not in self.list_bots:
+                            self.dict_newcomer_text_id[editor_text] = editor_id
+                            self.dict_newcomer_editcount[editor_text] = editor_editcount
+
+                            self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+
+                        # collect data for experienced editors
+                        if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
+                            self.dict_editor_text_id[editor_text] = editor_id
+                            self.dict_editor_text_editcount[editor_text] = editor_editcount
+
+                            self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+                except KeyError:
+                    if self.catch_error_to_sleep(response):
                         continue
-
-                    editor_text = editor_info['name']
-                    editor_id = editor_info['userid']
-                    editor_editcount = editor_info['editcount']
-                    editor_regstr_ts = editor_info['registration']
-
-                    if editor_regstr_ts is None:
-                        delta_days = self.constr_newcomer_days + 1
                     else:
-                        regstr_datetime = datetime.strptime(editor_regstr_ts, "%Y-%m-%dT%H:%M:%SZ")
-                        delta_days = (datetime.now() - regstr_datetime).days
-
-                    # collect data for newcomers
-                    if delta_days <= self.constr_newcomer_days and editor_text not in self.list_bots:
-                        self.dict_newcomer_text_id[editor_text] = editor_id
-                        self.dict_newcomer_editcount[editor_text] = editor_editcount
-
-                        self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
-
-                    # collect data for experienced editors
-                    if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
-                        self.dict_editor_text_id[editor_text] = editor_id
-                        self.dict_editor_text_editcount[editor_text] = editor_editcount
-
-                        self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+                        break
+                except requests.exceptions.ConnectionError:
+                    print("Max retries exceeded with url.")
+                    sleep(5)
+                    continue
+                except:
+                    print("Throwing except: {}".format(response))
+                    continue
 
                     # print("{},{},{}".format(editor_text, editor_id, editor_editcount))
 
