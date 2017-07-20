@@ -251,6 +251,7 @@ class RecommendExperienced():
 
             # TODO: another option: preprocess using the dump data
             # obtain the projects the article within the scope of
+
             if article.lower() in self.dict_article_projects:
                 projects = self.dict_article_projects[article.lower()]
 
