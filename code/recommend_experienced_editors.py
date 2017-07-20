@@ -56,16 +56,23 @@ class RecommendExperienced():
         self.parser_cat = PageParser()
 
         # the projects an article within the scope of - parsed from article talk pages
-        self.dict_article_projects = self.read_artile_projects(argv[4])
-        self.fout_art_proj = open(argv[4], 'a')
+        # self.dict_article_projects = self.read_article_projects(argv[4])
+        # self.fout_art_proj = open(argv[4], 'a')
+        self.dict_article_projects = self.read_article_projects(argv[4])
 
 
     # query the active editors to obtain their total edits in Wikipedia
     def identify_newcomers_and_experienced_editors(self):
         print("### Identifying newcomers and active experienced editors to recommend ###")
 
-        cnt_editor, str_editors = 0, ""
+        cnt_total_editor, cnt_editor, str_editors = 0, 0, ""
         for editor_text in self.list_active_editors:
+
+            if self.debug:
+                if cnt_total_editor > 100:
+                    break
+                cnt_total_editor += 1
+
 
             # create a list of editors to request at the same time (50 maximum)
             if cnt_editor < 45:
@@ -105,8 +112,6 @@ class RecommendExperienced():
                     # print("{},{},{}".format(editor_text, editor_id, editor_editcount))
 
                 cnt_editor, str_editors = 0, ""
-                if self.debug:
-                    break
         print("Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
                                                                                           len(self.dict_editor_text_id),
                                                                                           len(self.dict_newcomer_text_id)))
@@ -114,9 +119,12 @@ class RecommendExperienced():
     def fetch_newcomers_and_experienced_editors_history(self):
         print("#### Working on newcomers... ####")
         self.fetch_history(self.dict_newcomer_text_id.keys(), True)
+        self.write_newcomer_recommendations()
 
         print("#### Working on experienced editors... ####")
         self.fetch_history(self.dict_editor_text_id.keys(), False)
+        self.write_rule_recommendations()
+
 
 
     def fetch_history(self, editor_list, is_newcomers):
@@ -124,6 +132,7 @@ class RecommendExperienced():
         # TODO: write members that are done fetching into a file with the latest timestamp
         # TODO: write the articles editor edited into files to fasten the process
         editor_cnt = 0
+
         for editor_text in editor_list:
             print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
             editor_cnt += 1
@@ -240,32 +249,44 @@ class RecommendExperienced():
         for article in edits_article_pages:
             cnt_edits = edits_article_pages[article]
 
+            # TODO: another option: preprocess using the dump data
             # obtain the projects the article within the scope of
-            if article in self.dict_article_projects.keys():
+            if article.lower() in self.dict_article_projects:
+                projects = self.dict_article_projects[article.lower()]
 
-                projects = self.dict_article_projects[article]
-                if projects[0] == 'NONE':
-                    continue
-            else:
-                # TODO: write this into a file: this is static..
-                projects = self.parser_cat.extract_article_projects(article)
-                self.dict_article_projects[article] = projects
-
-                # write into a file
-
-            has_sample_projects = False
-            for project in projects:
-                if project not in self.list_sample_projects:
-                    continue
-                has_sample_projects = True
-
-                print("{}**{}".format(article, project), file=self.fout_art_proj)
-                stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
+                for project in projects:
+                    stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
                                                     else stats_edits_project_articles[project] + cnt_edits
 
-            if not has_sample_projects:
-                print("{}**{}".format(article, "NONE"), file=self.fout_art_proj)
-            self.fout_art_proj.flush()
+            # if article in self.dict_article_projects.keys():
+            #
+            #     projects = self.dict_article_projects[article]
+            #     if projects[0] == 'NONE':
+            #         continue
+            # else:
+            #     # TODO: write this into a file: this is static..
+            #     projects = self.parser_cat.extract_article_projects(article)
+            #     # self.dict_article_projects[article] = projects
+            #
+            # has_sample_projects = False
+            # for project in projects:
+            #     if project not in self.list_sample_projects:
+            #         continue
+            #     has_sample_projects = True
+            #
+            #     if article in self.dict_article_projects:
+            #          self.dict_article_projects[article].append(project)
+            #     else:
+            #          self.dict_article_projects[article] = [project]
+
+                # print("{}**{}".format(article, project), file=self.fout_art_proj)
+                # stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
+                #                                     else stats_edits_project_articles[project] + cnt_edits
+
+            # if not has_sample_projects:
+            #     self.dict_article_projects[article] = ["NONE"]
+            #     print("{}**{}".format(article, "NONE"), file=self.fout_art_proj)
+            # self.fout_art_proj.flush()
 
         return stats_edits_project_articles
 
@@ -480,7 +501,7 @@ class RecommendExperienced():
     def write_rule_recommendations(self):
 
         fout = open("data/rule_recommendations.csv", "w")
-        print("wikiproject,editor_text,user_id,project_edits,wp_edits,last_edit,regstr_time", file=fout)
+        print("wikiproject**editor_text**user_id**project_edits**wp_edits**last_edit**regstr_time", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_project_rule_based_recommendation[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
@@ -491,25 +512,27 @@ class RecommendExperienced():
                                                     self.dict_editor_last_edit_datetime[editor_text]), file=fout)
 
     def write_newcomer_recommendations(self):
+        # TODO: add newcomer's article
 
         fout = open("data/sample_newcomers.csv", "w")
-        print("wikiproject,user_text,user_id,project,project_edits,wp_edits,last_edit,regstr_time", file=fout)
+        print("wikiproject**user_text**user_id**project**project_edits**wp_edits**last_edit**regstr_time", file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                       self.dict_editor_text_id[editor_text],
+                print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                       self.dict_newcomer_text_id[editor_text],
                                                        self.dict_project_newcomer_edits[wikiproject][editor_text],
                                                        self.dict_newcomer_editcount[editor_text],
                                                        self.dict_editor_last_edit_datetime[editor_text],
-                                                       self.dict_editor_regstr_time[editor_text]), file=format())
+                                                       self.dict_editor_regstr_time[editor_text]), file=fout)
 
     @staticmethod
-    def read_artile_projects(filename):
+    def read_article_projects(filename):
+        print("### Reading projects of the articles from file... ###")
         article_projects = {}
         if os.path.isfile(filename):
             for line in open(filename, 'r'):
-                article = line.split("**")[0]
-                project = line.split("**")[1].strip()
+                article = line.split(",")[1]
+                project = line.split(",")[2].strip()
                 if article in article_projects:
                     article_projects[article].append(project)
                 else:
@@ -575,8 +598,7 @@ class RecommendExperienced():
         # collect edits for recommendation
         self.fetch_newcomers_and_experienced_editors_history()
 
-        self.write_rule_recommendations()
-        self.write_newcomer_recommendations()
+
 
 
 
