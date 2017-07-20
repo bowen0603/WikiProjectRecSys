@@ -1,7 +1,6 @@
 from __future__ import print_function
 from page_parser import PageParser
-from datetime import datetime
-import os.path
+
 
 __author__ = 'bobo'
 
@@ -12,6 +11,9 @@ TODO: need to handle maximum request threshold and sleeping...
 """
 import requests
 from time import sleep
+import random
+from datetime import datetime
+import os.path
 
 # todo: print out decode/encode problem...
 
@@ -40,6 +42,7 @@ class RecommendExperienced():
         self.dict_newcomer_text_id = {}
         self.dict_editor_regstr_time = {}
         self.dict_newcomer_editcount = {}
+        self.dict_newcomer_first_edit_article = {}
 
         self.exp_editor_thr = 100
 
@@ -178,8 +181,11 @@ class RecommendExperienced():
 
                     # print("{},{},{},{}".format(user_text, userid, page_title, ns))
                     if ns == 0:
+                        if is_newcomers and user_text not in self.dict_newcomer_first_edit_article:
+                            self.dict_newcomer_first_edit_article[user_text] = page_title
+
                         edits_ns0_artiles[page_title] = 1 if page_title not in edits_ns0_artiles \
-                            else edits_ns0_artiles[page_title] + 1
+                                else edits_ns0_artiles[page_title] + 1
 
                     elif ns == 3:
                         # todo: create a list of editors talked to
@@ -207,19 +213,21 @@ class RecommendExperienced():
                 print("Throwing except: {}".format(response))
                 continue
 
+            stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
             if is_newcomers:
-                stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
-                self.add_project_newcomer_lists(user_text, stats_edits_projects_articles)
+                # stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
+                self.maintain_project_newcomer_recommendation_lists(user_text, stats_edits_projects_articles)
             else:
                 # end of fetching revisions of an editor
-                stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_artiles)
                 self.maintain_project_rule_based_recommendation_lists(user_text, stats_edits_projects_articles)
 
-                #TODO: insert sort to get topic editors who edited project related pages
+                # TODO: insert sort to get topic editors who edited project related pages
                 # stats_edits_projects_users = self.compute_project_user_edits(edits_ns3_users)
+                # self.maintain_project_bonds_based_recommendation_lists(user_text, stats_edits_projects_users)
                 # editor - project - talk
                 # TODO: bonds-based recommendations
                 # projects_editor_communicated_with = self.get_project_member_talks(stats_edits_projects_users)
+
 
                 # editor - project - edits
                 # TODO: identify himself as project contributor
@@ -250,8 +258,13 @@ class RecommendExperienced():
                 list_recommended_editors_sorted.pop()
             self.dict_project_rule_based_recommendation[project] = dict(list_recommended_editors_sorted)
 
-    def add_project_newcomer_lists(self, editor_text, stats_edits_projects_articles):
-        for project in stats_edits_projects_articles.keys():
+
+    # randomly pick one project for the newcomer to recommend based on the first article the editor edited
+    def maintain_project_newcomer_recommendation_lists(self, editor_text, stats_edits_projects_articles):
+        if self.dict_newcomer_first_edit_article[editor_text].lower() in self.dict_article_projects:
+            projects = self.dict_article_projects[self.dict_newcomer_first_edit_article[editor_text].lower()]
+            project = random.choice(projects)
+
             project_members = self.dict_project_newcomer_edits[project]
             # get the edits within the project
             project_members[editor_text] = stats_edits_projects_articles[project]
@@ -530,15 +543,16 @@ class RecommendExperienced():
         # TODO: add newcomer's article
 
         fout = open("data/sample_newcomers.csv", "w")
-        print("wikiproject**user_text**user_id**project**project_edits**wp_edits**last_edit**regstr_time", file=fout)
+        print("wikiproject**user_text**user_id**first_article**project_edits**wp_edits**last_edit**regstr_time", file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                       self.dict_newcomer_text_id[editor_text],
-                                                       self.dict_project_newcomer_edits[wikiproject][editor_text],
-                                                       self.dict_newcomer_editcount[editor_text],
-                                                       self.dict_editor_last_edit_datetime[editor_text],
-                                                       self.dict_editor_regstr_time[editor_text]), file=fout)
+                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                              self.dict_newcomer_text_id[editor_text],
+                                                              self.dict_newcomer_first_edit_article[editor_text],
+                                                              self.dict_project_newcomer_edits[wikiproject][editor_text],
+                                                              self.dict_newcomer_editcount[editor_text],
+                                                              self.dict_editor_last_edit_datetime[editor_text],
+                                                              self.dict_editor_regstr_time[editor_text]), file=fout)
 
     @staticmethod
     def read_article_projects(filename):
