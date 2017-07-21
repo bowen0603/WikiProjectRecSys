@@ -254,14 +254,11 @@ class RecommendExperienced():
             dict_recommended_editors = self.dict_rule_based_recommendation[project]
             dict_recommended_editors[user_text] = stats_edits_projects_articles[project]
 
-            # sort the dict and remove the last one if there are more editors
-            import operator
-            list_recommended_editors_sorted = sorted(dict_recommended_editors.items(), key=operator.itemgetter(1))
+            # identify the least to recommending editor, and remove it from the list
+            if len(dict_recommended_editors) > self.const_recommendation_nbr:
+                editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
+                del dict_recommended_editors[editor_min]
 
-            if len(list_recommended_editors_sorted) > self.const_recommendation_nbr:
-                list_recommended_editors_sorted.reverse()
-                list_recommended_editors_sorted.pop()
-            self.dict_rule_based_recommendation[project] = dict(list_recommended_editors_sorted)
 
     def maintain_project_bonds_based_recommendation_lists(self, user_text, stats_edits_projects_users):
         for project in self.dict_project_contributors:
@@ -277,14 +274,9 @@ class RecommendExperienced():
             dict_recommended_editors = self.dict_bonds_based_recommendation[project]
             dict_recommended_editors[user_text] = stats_edits_projects_users[project]
 
-            # sort the dict and remove the last one if there are more editors
-            import operator
-            list_recommended_editors_sorted = sorted(dict_recommended_editors.items(), key=operator.itemgetter(1))
-
-            if len(list_recommended_editors_sorted) > self.const_recommendation_nbr:
-                list_recommended_editors_sorted.reverse()
-                list_recommended_editors_sorted.pop()
-            self.dict_bonds_based_recommendation[project] = dict(list_recommended_editors_sorted)
+            if len(dict_recommended_editors) > self.const_recommendation_nbr:
+                editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
+                del dict_recommended_editors[editor_min]
 
     # randomly pick one project for the newcomer to recommend based on the first article the editor edited
     def maintain_project_newcomer_recommendation_lists(self, editor_text, stats_edits_projects_articles):
@@ -316,37 +308,6 @@ class RecommendExperienced():
                 for project in projects:
                     stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
                                                     else stats_edits_project_articles[project] + cnt_edits
-
-            # if article in self.dict_article_projects.keys():
-            #
-            #     projects = self.dict_article_projects[article]
-            #     if projects[0] == 'NONE':
-            #         continue
-            # else:
-            #     # TODO: write this into a file: this is static..
-            #     projects = self.parser_cat.extract_article_projects(article)
-            #     # self.dict_article_projects[article] = projects
-            #
-            # has_sample_projects = False
-            # for project in projects:
-            #     if project not in self.list_sample_projects:
-            #         continue
-            #     has_sample_projects = True
-            #
-            #     if article in self.dict_article_projects:
-            #          self.dict_article_projects[article].append(project)
-            #     else:
-            #          self.dict_article_projects[article] = [project]
-
-                # print("{}**{}".format(article, project), file=self.fout_art_proj)
-                # stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
-                #                                     else stats_edits_project_articles[project] + cnt_edits
-
-            # if not has_sample_projects:
-            #     self.dict_article_projects[article] = ["NONE"]
-            #     print("{}**{}".format(article, "NONE"), file=self.fout_art_proj)
-            # self.fout_art_proj.flush()
-
         return stats_edits_project_articles
 
     # handle user talk pages (ns 3)
@@ -364,7 +325,6 @@ class RecommendExperienced():
                                                             else stats_edits_users[project] + cnt_edits
                 stats_project_per_talker[project] = 1 if project not in stats_project_per_talker \
                                                             else stats_project_per_talker[project] + 1
-
         return stats_edits_users, stats_project_per_talker
 
     # handle project talk pages (ns 4 and 5)
@@ -561,6 +521,10 @@ class RecommendExperienced():
 
 
     def write_rule_recommendations(self):
+        # sort the list if needed
+        # import operator
+        # list_recommended_editors_sorted = sorted(dict_recommended_editors.items(), key=operator.itemgetter(1))
+
         fout = open("data/recommendations_rule.csv", "w")
         print("wikiproject**editor_text**user_id**project_edits**wp_edits**last_edit**regstr_time", file=fout)
         for wikiproject in self.list_sample_projects:
