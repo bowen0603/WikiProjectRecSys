@@ -15,8 +15,6 @@ import random
 from datetime import datetime
 import os.path
 
-# todo: print out decode/encode problem...
-
 class RecommendExperienced():
 
     def __init__(self, argv):
@@ -109,14 +107,15 @@ class RecommendExperienced():
                             self.dict_newcomer_text_id[editor_text] = editor_id
                             self.dict_newcomer_editcount[editor_text] = editor_editcount
 
-                            self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+                            self.dict_editor_regstr_time[editor_text] = regstr_datetime
 
                         # collect data for experienced editors
                         if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
                             self.dict_editor_text_id[editor_text] = editor_id
                             self.dict_editor_text_editcount[editor_text] = editor_editcount
 
-                            self.dict_editor_regstr_time[editor_text] = editor_regstr_ts
+                            #
+                            self.dict_editor_regstr_time[editor_text] = regstr_datetime
                 except KeyError:
                     if self.catch_error_to_sleep(response):
                         continue
@@ -571,7 +570,7 @@ class RecommendExperienced():
                                                     self.dict_rule_based_recommendation[wikiproject][editor_text],
                                                     self.dict_editor_text_editcount[editor_text],
                                                     self.dict_editor_last_edit_datetime[editor_text],
-                                                    self.dict_editor_last_edit_datetime[editor_text]), file=fout)
+                                                    self.dict_editor_regstr_time[editor_text]), file=fout)
 
     def write_bonds_recommendations(self):
         fout = open("data/recommendations_bonds.csv", "w")
@@ -584,7 +583,7 @@ class RecommendExperienced():
                                                     self.dict_editor_project_talker_nbr[editor_text][wikiproject],
                                                     self.dict_editor_text_editcount[editor_text],
                                                     self.dict_editor_last_edit_datetime[editor_text],
-                                                    self.dict_editor_last_edit_datetime[editor_text]), file=fout)
+                                                    self.dict_editor_regstr_time[editor_text]), file=fout)
 
     def write_newcomer_recommendations(self):
         fout = open("data/recommendations_newcomers.csv", "w")
