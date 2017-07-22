@@ -238,11 +238,10 @@ class RecommendExperienced():
                 self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
 
                 # TODO: insert sort to get topic editors who edited project related pages
-                stats_edits_projects_users, self.dict_editor_project_talker_nbr[
-                    editor_text] = self.compute_project_user_edits(edits_ns3_users)
+                stats_edits_projects_users, self.dict_editor_project_talker_nbr[editor_text] = \
+                    self.compute_project_user_edits(edits_ns3_users)
                 self.maintain_project_bonds_based_recommendation_lists(editor_text, stats_edits_projects_users)
-                # editor - project - talk
-                # projects_editor_communicated_with = self.get_project_member_talks(stats_edits_projects_users)
+
 
 
                 # editor - project - edits
