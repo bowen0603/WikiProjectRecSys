@@ -15,13 +15,13 @@ import random
 from datetime import datetime
 import os.path
 
-class RecommendExperienced():
 
+class RecommendExperienced():
     def __init__(self, argv):
 
         # TODO to chagne
-        self.const_recommendation_nbr = 20 # 20
-        self.const_max_requests = 500 # 500
+        self.const_recommendation_nbr = 20  # 20
+        self.const_max_requests = 500  # 500
         self.constr_newcomer_days = 5
         self.debug = True
         self.debug_nbr = 100
@@ -53,17 +53,18 @@ class RecommendExperienced():
         self.url_propages = "https://en.wikipedia.org/w/api.php?action=query&format=json&list=prefixsearch&"
         self.url_contributors = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=contributors&"
 
-        self.list_active_editors = self.read_active_editors(argv[1])
-        self.list_sample_projects, self.dict_rule_based_recommendation, self.dict_bonds_based_recommendation, self.dict_project_newcomer_edits \
-            = self.read_sample_projects(argv[2])
-        self.list_bots = self.read_bot_list(argv[3])
+        self.list_active_editors = self.read_active_editors()
+        self.list_sample_projects, self.dict_topic_based_recommendation, self.dict_rule_based_recommendation, \
+            self.dict_bonds_based_recommendation, self.dict_project_newcomer_edits = self.read_sample_projects()
+        self.list_bots = self.read_bot_list()
 
         self.parser_cat = PageParser()
 
         # the projects an article within the scope of - parsed from article talk pages
-        # self.dict_article_projects = self.read_article_projects(argv[4])
-        # self.fout_art_proj = open(argv[4], 'a')
-        self.dict_article_projects = self.read_article_projects(argv[4])
+        self.dict_article_projects = self.read_article_projects()
+        self.dict_article_categories = self.read_article_categories()
+
+        self.dict_project_categories = self.read_project_categories()
 
 
     # query the active editors to obtain their total edits in Wikipedia
@@ -132,9 +133,11 @@ class RecommendExperienced():
                     # print("{},{},{}".format(editor_text, editor_id, editor_editcount))
 
                 cnt_editor, str_editors = 0, ""
-        print("Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
+        print(
+            "Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
                                                                                           len(self.dict_editor_text_id),
-                                                                                          len(self.dict_newcomer_text_id)))
+                                                                                          len(
+                                                                                              self.dict_newcomer_text_id)))
 
     def fetch_newcomers_and_experienced_editors_history(self):
         print("#### Working on newcomers... ####")
@@ -147,7 +150,6 @@ class RecommendExperienced():
         self.write_bonds_recommendations()
 
 
-
     def fetch_history(self, editor_list, is_newcomers):
 
         # TODO: write members that are done fetching into a file with the latest timestamp
@@ -156,7 +158,7 @@ class RecommendExperienced():
 
         for editor_text in editor_list:
             if editor_cnt % 1000 == 0:
-                print("## Retrieving and analyzing {}k editors.. ".format(editor_cnt/1000))
+                print("## Retrieving and analyzing {}k editors.. ".format(editor_cnt / 1000))
 
             # print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
             editor_cnt += 1
@@ -171,8 +173,8 @@ class RecommendExperienced():
 
             # Just fetch 500 edits using one query for each editor
             try:
-                query = self.url_usercontb + "uclimit="+str(self.const_max_requests)+"&ucnamespace=0|3|4|5&" \
-                                     "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
+                query = self.url_usercontb + "uclimit=" + str(self.const_max_requests) + "&ucnamespace=0|3|4|5&" \
+                                                                                         "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
                 response = requests.get(query).json()
 
                 for usercontrib in response['query']['usercontribs']:
@@ -191,13 +193,14 @@ class RecommendExperienced():
                         if is_newcomers and editor_text not in self.dict_newcomer_first_edit_article:
                             self.dict_newcomer_first_edit_article[editor_text] = page_title
 
+                        page_title = page_title.lower()
                         edits_ns0_articles[page_title] = 1 if page_title not in edits_ns0_articles \
-                                                                else edits_ns0_articles[page_title] + 1
+                            else edits_ns0_articles[page_title] + 1
 
                     elif ns == 3:
                         if not is_newcomers:
                             edits_ns3_users[page_title] = 1 if page_title not in edits_ns3_users \
-                                                                else edits_ns3_users[page_title] + 1
+                                else edits_ns3_users[page_title] + 1
                     else:
                         # don't really need to do anything for edits on project pages,
                         # since project contributors have been identified
@@ -225,10 +228,18 @@ class RecommendExperienced():
                 self.maintain_project_newcomer_recommendation_lists(editor_text, stats_edits_projects_articles)
             else:
 
+                editor_topic_vector = self.compute_editor_topic_vector(edits_ns0_articles)
+                # ignore not valid editors
+                if not editor_topic_vector:
+                    continue
+
+                self.maintain_project_topic_based_recommendation_lists(editor_text, editor_topic_vector)
+
                 self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
 
                 # TODO: insert sort to get topic editors who edited project related pages
-                stats_edits_projects_users, self.dict_editor_project_talker_nbr[editor_text] = self.compute_project_user_edits(edits_ns3_users)
+                stats_edits_projects_users, self.dict_editor_project_talker_nbr[
+                    editor_text] = self.compute_project_user_edits(edits_ns3_users)
                 self.maintain_project_bonds_based_recommendation_lists(editor_text, stats_edits_projects_users)
                 # editor - project - talk
                 # projects_editor_communicated_with = self.get_project_member_talks(stats_edits_projects_users)
@@ -237,6 +248,21 @@ class RecommendExperienced():
                 # editor - project - edits
                 # TODO: identify himself as project contributor
                 # stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+
+    def maintain_project_topic_based_recommendation_lists(self, user_text, editor_topic_vector):
+        for project in self.dict_project_categories:
+            val = self.compute_topic_cosine_similarity(editor_topic_vector, self.dict_project_categories[project])
+
+            # todo: how to deal with the duplicated recommendations for different projects ??
+
+            # insert the new editor
+            dict_recommended_editors = self.dict_topic_based_recommendation[project]
+            dict_recommended_editors[user_text] = val
+
+            # identify the least to recommending editor, and remove it from the list
+            if len(dict_recommended_editors) > self.const_recommendation_nbr:
+                editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
+                del dict_recommended_editors[editor_min]
 
 
     # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
@@ -292,6 +318,27 @@ class RecommendExperienced():
             # get the edits within the project
             project_members[editor_text] = stats_edits_projects_articles[project]
 
+
+    def compute_editor_topic_vector(self, edits_article_pages):
+        editor_topic_vector = {}
+        for article in edits_article_pages:
+            cnt_edits = edits_article_pages[article]
+
+            # get the project of the articles read from dump data
+            if article in self.dict_article_categories:
+                categories = self.dict_article_categories[article]
+
+                # nested structure with both (category, category weight)
+                for category in categories:
+                    weight = cnt_edits * categories[category]
+                    editor_topic_vector[category] = weight if category not in editor_topic_vector \
+                        else editor_topic_vector[category] + weight
+        sum_value = sum(editor_topic_vector.values())
+        if sum_value != 0:
+            factor = 1.0 / sum_value
+            editor_topic_vector = {k: v * factor for k, v in editor_topic_vector.items()}
+        return editor_topic_vector
+
     # computer article edits on the sample projects
     def compute_project_article_edits(self, edits_article_pages):
 
@@ -299,15 +346,13 @@ class RecommendExperienced():
         for article in edits_article_pages:
             cnt_edits = edits_article_pages[article]
 
-            # TODO: another option: preprocess using the dump data
-            # obtain the projects the article within the scope of
-
-            if article.lower() in self.dict_article_projects:
-                projects = self.dict_article_projects[article.lower()]
+            # get the project of the articles read from dump data
+            if article in self.dict_article_projects:
+                projects = self.dict_article_projects[article]
 
                 for project in projects:
                     stats_edits_project_articles[project] = cnt_edits if project not in stats_edits_project_articles \
-                                                    else stats_edits_project_articles[project] + cnt_edits
+                        else stats_edits_project_articles[project] + cnt_edits
         return stats_edits_project_articles
 
     # handle user talk pages (ns 3)
@@ -319,12 +364,13 @@ class RecommendExperienced():
             user_text = page.replace("User talk:", "")
 
             for project in self.list_sample_projects:
-                if project in self.dict_project_contributors and user_text not in self.dict_project_contributors[project]:
+                if project in self.dict_project_contributors and user_text not in self.dict_project_contributors[
+                    project]:
                     continue
                 stats_edits_users[project] = cnt_edits if project not in stats_edits_users \
-                                                            else stats_edits_users[project] + cnt_edits
+                    else stats_edits_users[project] + cnt_edits
                 stats_project_per_talker[project] = 1 if project not in stats_project_per_talker \
-                                                            else stats_project_per_talker[project] + 1
+                    else stats_project_per_talker[project] + 1
         return stats_edits_users, stats_project_per_talker
 
     # handle project talk pages (ns 4 and 5)
@@ -338,7 +384,7 @@ class RecommendExperienced():
                     continue
 
                 stats_edits_projects[project] = cnt_edits if project not in stats_edits_projects \
-                                                else stats_edits_projects[project] + cnt_edits
+                    else stats_edits_projects[project] + cnt_edits
 
         return stats_edits_projects
 
@@ -372,7 +418,7 @@ class RecommendExperienced():
                 self.dict_project_sub_talkpages[project] = list(set_project_talk_pages)
 
                 print("Collected pages for WikiProject:{}. {} related pages.".format(project,
-                                                                                     len(set_project_pages)+
+                                                                                     len(set_project_pages) +
                                                                                      len(set_project_talk_pages)))
                 # write into file
                 for page in set_project_pages:
@@ -398,18 +444,21 @@ class RecommendExperienced():
                 else:
                     self.dict_project_contributors[project] = [contributor]
             for project in self.dict_project_contributors.keys():
-                print("Reading {} contributors for WikiProject: {}.".format(len(self.dict_project_contributors[project]),
-                                                                            project))
+                print(
+                    "Reading {} contributors for WikiProject: {}.".format(len(self.dict_project_contributors[project]),
+                                                                          project))
         else:
             print("### Collecting members of WikiProjects, and writing into file ###")
             fout = open(fname, 'w')
             for project in self.list_sample_projects:
                 contributors = set()
                 if project in self.dict_project_sub_pages:
-                    contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_pages[project]))
+                    contributors = contributors.union(
+                        self.search_page_contributors(self.dict_project_sub_pages[project]))
 
                 if project in self.dict_project_sub_talkpages:
-                    contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_talkpages[project]))
+                    contributors = contributors.union(
+                        self.search_page_contributors(self.dict_project_sub_talkpages[project]))
 
                 self.dict_project_contributors[project] = contributors
                 print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
@@ -421,11 +470,12 @@ class RecommendExperienced():
 
 
     def constr_original_page(self, pages):
-        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&titles=" + pages
+        query = self.url_contributors + "pclimit=" + str(self.const_max_requests) + "&titles=" + pages
         return query
 
     def constr_next_page(self, pages, cont):
-        query = self.url_contributors + "pclimit="+str(self.const_max_requests)+"&pccontinue=" + cont + "&titles=" + pages
+        query = self.url_contributors + "pclimit=" + str(
+            self.const_max_requests) + "&pccontinue=" + cont + "&titles=" + pages
         return query
 
     def search_page_contributors(self, page_titles):
@@ -468,7 +518,7 @@ class RecommendExperienced():
                         if self.catch_error_to_sleep(response):
                             continue
                         else:
-                            break # TODO: not entirely sure about this terminal condition
+                            break  # TODO: not entirely sure about this terminal condition
                     except requests.exceptions.ConnectionError:
                         print("Max retries exceeded with url.")
                         sleep(5)
@@ -489,7 +539,8 @@ class RecommendExperienced():
         continue_querying = True
         while continue_querying:
             try:
-                query = self.url_propages + "pslimit="+str(self.const_max_requests)+"&psnamespace=4|5&psoffset=" + str(psoffset) + "&pssearch=" + search_name
+                query = self.url_propages + "pslimit=" + str(
+                    self.const_max_requests) + "&psnamespace=4|5&psoffset=" + str(psoffset) + "&pssearch=" + search_name
                 response = requests.get(query).json()
                 if 'continue' in response:
                     psoffset = response['continue']['psoffset']
@@ -530,11 +581,11 @@ class RecommendExperienced():
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_rule_based_recommendation[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                    self.dict_editor_text_id[editor_text],
-                                                    self.dict_rule_based_recommendation[wikiproject][editor_text],
-                                                    self.dict_editor_text_editcount[editor_text],
-                                                    self.dict_editor_last_edit_datetime[editor_text],
-                                                    self.dict_editor_regstr_time[editor_text]), file=fout)
+                                                          self.dict_editor_text_id[editor_text],
+                                                          self.dict_rule_based_recommendation[wikiproject][editor_text],
+                                                          self.dict_editor_text_editcount[editor_text],
+                                                          self.dict_editor_last_edit_datetime[editor_text],
+                                                          self.dict_editor_regstr_time[editor_text]), file=fout)
 
     def write_bonds_recommendations(self):
         fout = open("data/recommendations_bonds.csv", "w")
@@ -542,29 +593,69 @@ class RecommendExperienced():
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_bonds_based_recommendation[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                    self.dict_editor_text_id[editor_text],
-                                                    self.dict_bonds_based_recommendation[wikiproject][editor_text],
-                                                    self.dict_editor_project_talker_nbr[editor_text][wikiproject],
-                                                    self.dict_editor_text_editcount[editor_text],
-                                                    self.dict_editor_last_edit_datetime[editor_text],
-                                                    self.dict_editor_regstr_time[editor_text]), file=fout)
+                                                              self.dict_editor_text_id[editor_text],
+                                                              self.dict_bonds_based_recommendation[wikiproject][
+                                                                  editor_text],
+                                                              self.dict_editor_project_talker_nbr[editor_text][
+                                                                  wikiproject],
+                                                              self.dict_editor_text_editcount[editor_text],
+                                                              self.dict_editor_last_edit_datetime[editor_text],
+                                                              self.dict_editor_regstr_time[editor_text]), file=fout)
 
     def write_newcomer_recommendations(self):
         fout = open("data/recommendations_newcomers.csv", "w")
-        print("wikiproject**user_text**user_id**first_article**project_edits**wp_edits**last_edit**regstr_time", file=fout)
+        print("wikiproject**user_text**user_id**first_article**project_edits**wp_edits**last_edit**regstr_time",
+              file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                               self.dict_newcomer_text_id[editor_text],
                                                               self.dict_newcomer_first_edit_article[editor_text],
-                                                              self.dict_project_newcomer_edits[wikiproject][editor_text],
+                                                              self.dict_project_newcomer_edits[wikiproject][
+                                                                  editor_text],
                                                               self.dict_newcomer_editcount[editor_text],
                                                               self.dict_editor_last_edit_datetime[editor_text],
                                                               self.dict_editor_regstr_time[editor_text]), file=fout)
 
+
     @staticmethod
-    def read_article_projects(filename):
+    def compute_topic_cosine_similarity(editor_vector, project_vector):
+        cos_val = 0
+        for cate in project_vector:
+            if cate in editor_vector:
+                cos_val += project_vector[cate] * editor_vector[cate]
+        return cos_val
+
+    @staticmethod
+    def read_project_categories():
+        print("### Reading categories of the projects from file... ###")
+        projects_categories = {}
+        filename = "data/projects_categories.csv"
+        if os.path.isfile(filename):
+            with open(filename, 'r') as fin:
+                next(fin)
+                for line in fin:
+                    project = line.split(",")[0]
+                    projects_categories[project] = {}
+                    projects_categories[project]['arts'] = float(line.split(",")[1])
+                    projects_categories[project]['geography'] = float(line.split(",")[2])
+                    projects_categories[project]['health'] = float(line.split(",")[3])
+                    projects_categories[project]['mathematics'] = float(line.split(",")[4])
+                    projects_categories[project]['history'] = float(line.split(",")[5])
+                    projects_categories[project]['science'] = float(line.split(",")[6])
+                    projects_categories[project]['people'] = float(line.split(",")[7])
+                    projects_categories[project]['philosophy'] = float(line.split(",")[8])
+                    projects_categories[project]['religion'] = float(line.split(",")[9])
+                    projects_categories[project]['society'] = float(line.split(",")[10])
+                    projects_categories[project]['technology'] = float(line.split(",")[11])
+                    projects_categories[project]['NF'] = float(line.split(",")[12].strip())
+        return projects_categories
+
+
+    @staticmethod
+    def read_article_projects():
         print("### Reading projects of the articles from file... ###")
+        filename = "data/articles_top25_projects.csv"
         article_projects = {}
         if os.path.isfile(filename):
             for line in open(filename, 'r'):
@@ -577,10 +668,41 @@ class RecommendExperienced():
         return article_projects
 
     @staticmethod
+    def read_article_categories():
+
+        print("### Reading categories of the articles from file... ###")
+        filename = "data/articles_categories.csv"
+
+        article_categories = {}
+        cnt_line = 0
+        debug = True
+        if os.path.isfile(filename):
+            with open(filename, 'r') as fin:
+                next(fin)
+                for line in fin:
+                    if cnt_line > 5000:
+                        break
+                    cnt_line += 1
+                    try:
+                        article = line.split(",")[0]
+                        category = line.split(",")[1]
+                        cnt = int(line.split(",")[2].strip())
+                    except ValueError:
+                        # skip file reading errors ..
+                        continue
+
+                    if article not in article_categories:
+                        article_categories[article] = {}
+                        article_categories[article][category] = cnt
+                    else:
+                        article_categories[article][category] = cnt
+        return article_categories
+
+    @staticmethod
     def catch_error_to_sleep(response):
         if "error" in response:
             print("Code: {}; Info {}".format(response['error']['code'],
-                                            response['error']['info']))
+                                             response['error']['info']))
 
             if response['error']['code'] == 'maxlag':
                 ptime = max(5, int(response.headers['Retry-After']))
@@ -595,36 +717,44 @@ class RecommendExperienced():
         return False
 
     @staticmethod
-    def read_active_editors(file_editors):
+    def read_active_editors():
+
+        filename = "data/active_editors_past_week.csv"
         list_editors = []
         # each line only contain an editor name
-        for line in open(file_editors, "r").readlines()[1:]:
+        for line in open(filename, "r").readlines()[1:]:
             list_editors.append(line.replace("\n", ""))
         return list_editors
 
     @staticmethod
-    def read_sample_projects(file_project):
+    def read_sample_projects():
         # each line only contain an editor name
+        filename = "data/Top25ProjectsPastYear.csv"
         list_projects = []
+        dict_project_identity_based_recommendation = {}
         dict_project_rule_based_recommendation = {}
         dict_project_bonds_based_recommendation = {}
         dict_project_newcomer_edits = {}
 
-        for line in open(file_project, "r").readlines()[1:]:
+        for line in open(filename, "r").readlines()[1:]:
             project = line.split(",")[0].replace("WikiProject_", "").replace("_", " ")
             list_projects.append(project)
             dict_project_rule_based_recommendation[project] = {}
             dict_project_bonds_based_recommendation[project] = {}
             dict_project_newcomer_edits[project] = {}
+            dict_project_identity_based_recommendation[project] = {}
+
         return list_projects, dict_project_rule_based_recommendation, \
-               dict_project_bonds_based_recommendation, dict_project_newcomer_edits
+               dict_project_identity_based_recommendation, dict_project_bonds_based_recommendation, \
+               dict_project_newcomer_edits
 
     @staticmethod
-    def read_bot_list(bot_file):
-        # TODO: update the bot file
+    def read_bot_list():
+
+        filename = "data/bot_list.csv"
         # each line only contain an editor name
         list_bot = set()
-        for line in open(bot_file, "r").readlines()[1:]:
+        for line in open(filename, "r").readlines()[1:]:
             list_bot.add(line.strip())
         return list_bot
 
@@ -639,17 +769,18 @@ class RecommendExperienced():
         self.fetch_newcomers_and_experienced_editors_history()
 
 
-
 def main():
     from sys import argv
     # if len(argv) != 2:
     # print("Usage: <active_editors> <sample_projects> <bot_list> <article_projects>")
-    #     return
+    # return
 
     rec_exp = RecommendExperienced(argv)
     rec_exp.run()
 
+
 import time
+
 start_time = time.time()
 main()
-print("--- {} hours ---".format(1.0*(time.time() - start_time)/3600))
+print("--- {} hours ---".format(1.0 * (time.time() - start_time) / 3600))
