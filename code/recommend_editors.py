@@ -136,8 +136,7 @@ class RecommendExperienced():
         print(
             "Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
                                                                                           len(self.dict_editor_text_id),
-                                                                                          len(
-                                                                                              self.dict_newcomer_text_id)))
+                                                                                          len(self.dict_newcomer_text_id)))
 
     def fetch_newcomers_and_experienced_editors_history(self):
         print("#### Working on newcomers... ####")
@@ -363,8 +362,8 @@ class RecommendExperienced():
             user_text = page.replace("User talk:", "")
 
             for project in self.list_sample_projects:
-                if project in self.dict_project_contributors and user_text not in self.dict_project_contributors[
-                    project]:
+                if project in self.dict_project_contributors and \
+                                user_text not in self.dict_project_contributors[project]:
                     continue
                 stats_edits_users[project] = cnt_edits if project not in stats_edits_users \
                     else stats_edits_users[project] + cnt_edits
@@ -427,7 +426,7 @@ class RecommendExperienced():
         print()
 
 
-    def identify_project_members(self):
+    def identify_project_members_and_edits(self):
 
         # read into a list; create into a set
         cwd = os.getcwd()
@@ -460,6 +459,8 @@ class RecommendExperienced():
                         self.search_page_contributors(self.dict_project_sub_talkpages[project]))
 
                 self.dict_project_contributors[project] = contributors
+
+                # TODO: identify project memebers' most recent 500 edits on articles
                 print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
                                                                                             len(contributors)))
                 # write into files
@@ -761,7 +762,7 @@ class RecommendExperienced():
 
         # preprocess
         self.collect_project_related_pages()
-        self.identify_project_members()
+        self.identify_project_members_and_edits()
         self.identify_newcomers_and_experienced_editors()
 
         # collect edits for recommendation
