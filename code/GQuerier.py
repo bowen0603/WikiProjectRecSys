@@ -38,7 +38,7 @@ class QueryHandler:
         # Start the query and wait for the job to complete.
         query_job.begin()
         self.wait_for_job(query_job)
-        self.print_results(query_job.results())
+        # self.print_results(query_job.results())
 
         time_delta = (datetime.now() - time_start)
         print("Table [{}.{}] created in {} seconds.".format(dest_dataset, dest_table, time_delta.seconds))
@@ -75,11 +75,16 @@ class QueryHandler:
 
         # Reload the table to get the schema.
         table.reload()
+        if table.schema.__len__() == 1:
+            delimiter = None
+        else:
+            delimiter = '*'
 
         with open(source_file_name, 'rb') as source_file:
             job = table.upload_from_file(file_obj=source_file,
-                                         field_delimiter='*',
+                                         field_delimiter=delimiter,
                                          skip_leading_rows=1,
+                                         ignore_unknown_values=True,
                                          source_format='text/csv')
 
         self.wait_for_job(job)
@@ -128,10 +133,10 @@ class QueryHandler:
 
         self.create_table("bowen_quitting_script", "recommendations_newcomers", dict_schema)
         self.load_data_from_file("bowen_quitting_script", "recommendations_newcomers", "data/recommendations_newcomers.csv")
-
-def main():
-    handler = QueryHandler()
-    handler.execute()
-
-main()
+#
+# def main():
+#     handler = QueryHandler()
+#     handler.execute()
+#
+# main()
 

@@ -1,5 +1,6 @@
 from __future__ import print_function
 from page_parser import PageParser
+from recommend_cf_editors import UUCF
 
 
 __author__ = 'bobo'
@@ -33,6 +34,7 @@ class RecommendExperienced():
         self.dict_editor_text_id = {}
         self.dict_editor_text_editcount = {}
         self.dict_editor_last_edit_datetime = {}
+        self.dict_editor_is_valid = self.read_editor_validation_from_file()
         # computed by the contributors of project related pages
         # self.dict_project_members = {}
         self.dict_project_sub_pages = {}
@@ -58,7 +60,8 @@ class RecommendExperienced():
             self.dict_bonds_based_recommendation, self.dict_project_newcomer_edits = self.read_sample_projects()
         self.list_bots = self.read_bot_list()
 
-        self.parser_cat = PageParser()
+        self.page_parser = PageParser()
+        self.uucf = UUCF()
 
         # the projects an article within the scope of - parsed from article talk pages
         self.dict_article_projects = self.read_article_projects()
@@ -79,6 +82,15 @@ class RecommendExperienced():
                     break
                 cnt_total_editor += 1
 
+            # check if the editor is vandal or blocked
+            if editor_text in self.dict_editor_is_valid:
+                if not self.dict_editor_is_valid[editor_text]:
+                    continue
+
+            is_valid = self.page_parser.is_blocked_editor(editor_text)
+            self.dict_editor_is_valid[editor_text] = is_valid
+            if not is_valid:
+                continue
 
             # create a list of editors to request at the same time (50 maximum)
             if cnt_editor < 45:
@@ -115,7 +127,6 @@ class RecommendExperienced():
                             self.dict_editor_text_id[editor_text] = editor_id
                             self.dict_editor_text_editcount[editor_text] = editor_editcount
 
-                            #
                             self.dict_editor_regstr_time[editor_text] = regstr_datetime
                 except KeyError:
                     if self.catch_error_to_sleep(response):
@@ -138,7 +149,7 @@ class RecommendExperienced():
                                                                                           len(self.dict_editor_text_id),
                                                                                           len(self.dict_newcomer_text_id)))
 
-    def fetch_newcomers_and_experienced_editors_history(self):
+    def recommend_editors(self):
         print("#### Working on newcomers... ####")
         self.fetch_history(self.dict_newcomer_text_id.keys(), True)
         self.write_newcomer_recommendations()
@@ -165,10 +176,9 @@ class RecommendExperienced():
 
             edits_ns0_articles = {}
             edits_ns3_users = {}
-            edits_ns45_projects = {}
 
             # todo: extract projects from userboxes
-            # projects_userbox = self.parser_cat.extract_user_projects(editor_text)
+            # projects_userbox = self.page_parser.extract_user_projects(editor_text)
 
             # Just fetch 500 edits using one query for each editor
             try:
@@ -753,6 +763,39 @@ class RecommendExperienced():
                dict_project_identity_based_recommendation, dict_project_bonds_based_recommendation, \
                dict_project_newcomer_edits
 
+    def write_experienced_editors_to_file(self):
+        with open("data/experienced_editors.csv", "w") as fout:
+            print("user_text", file=fout)
+            for user_text in self.dict_editor_text_id.keys():
+                print("{}".format(user_text), file=fout)
+
+    @staticmethod
+    def read_editor_validation_from_file():
+        cwd = os.getcwd()
+        fname = cwd + "/data/editor_validation.csv"
+        dict_editor_is_valid = {}
+
+        if os.path.isfile(fname):
+            with open("data/editor_validation.csv", "r") as fin:
+                header = True
+                for line in fin:
+                    if header:
+                        header = False
+                        continue
+                    user_text = line.split('*')[0]
+                    is_valid = True if line.split('*')[1].split() == 'True' else False
+                    dict_editor_is_valid[user_text] = is_valid
+        return dict_editor_is_valid
+
+
+    def write_editor_validation_to_file(self):
+        with open("data/editor_validation.csv", "w") as fout:
+            print("user_text,is_valid", file=fout)
+            for user_text in self.dict_editor_is_valid.keys():
+                print("{}*{}".format(user_text,
+                                     self.dict_editor_is_valid[user_text]), file=fout)
+
+
     @staticmethod
     def read_bot_list():
 
@@ -765,13 +808,21 @@ class RecommendExperienced():
 
     def run(self):
 
-        # preprocess
+        # pre-process
         self.collect_project_related_pages()
         self.identify_project_members_and_edits()
         self.identify_newcomers_and_experienced_editors()
 
-        # collect edits for recommendation
-        self.fetch_newcomers_and_experienced_editors_history()
+        self.write_experienced_editors_to_file()
+        self.write_editor_validation_to_file()
+
+        # recommend editors
+        self.recommend_editors()
+
+        # recommend uu cf based editors
+        self.uucf.recommend_editors()
+
+
 
 
 def main():

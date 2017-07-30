@@ -66,7 +66,7 @@ while continue_querying:
                 edits_ns0_artiles[page_title] = 1 if page_title not in edits_ns0_artiles \
                     else edits_ns0_artiles[page_title] + 1
 
-                # projects = self.parser_cat.extract_article_projects(title)
+                # projects = self.page_parser.extract_article_projects(title)
                 # print(projects)
                 # todo: create editor-project-editcount
                 # todo: handle extracted projects

@@ -8,6 +8,7 @@ class PageParser:
     def __init__(self):
         self.url_article = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
         self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
+        self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
 
     def extract_article_projects(self, page_title):
 
@@ -53,6 +54,42 @@ class PageParser:
                         wikiprojects.append("women in red")
 
         return wikiprojects
+
+    # TODO: batch of editors or just a small amount?
+    def is_blocked_editor(self, user_name):
+        try:
+            query = self.url_talk_user + user_name
+            response = requests.get(query).json()
+
+            page = list(response['query']['pages'].items())[0][1]
+            page_ns = page['ns']
+            page_text = page['revisions'][0]['*']
+
+        except KeyError:
+            if "error" in response:
+                print("Error occurs when parsing article talk page. "
+                      "Code: {}; Info {}".format(response['error']['code'],
+                                                response['error']['info']))
+            return True
+
+        wikicode = mwp.parse(page_text)
+
+        if page_ns == 3:
+            comments = wikicode.filter_comments()
+            for comment in comments:
+
+                content = comment.contents
+                if content.contains('Template:') and content.contains('block'):
+                    return True
+
+                if content.contains('Template:') and content.contains('vandalism'):
+                    return True
+
+                if content.contains('Template:') and content.contains('vandal'):
+                    return True
+
+        return False
+
 
 
     def extract_userboxes(self, user_name):
@@ -104,6 +141,7 @@ class PageParser:
 def main():
     parser = PageParser()
     # parser.extract_article_projects("")
-    parser.extract_userboxes("")
+    # parser.extract_userboxes("")
+    parser.is_blocked_editor("")
 
 main()

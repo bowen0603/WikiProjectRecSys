@@ -23,11 +23,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="Gquerier.py" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/code/Gquerier.py">
+      <file leaf-file-name="GQuerier.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/code/GQuerier.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-14.423077" vertical-offset="1512" max-vertical-offset="2431">
-              <caret line="111" column="8" selection-start-line="111" selection-start-column="8" selection-end-line="116" selection-end-column="78" />
+            <state vertical-scroll-proportion="-8.884615" vertical-offset="1520" max-vertical-offset="2516">
+              <caret line="103" column="0" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -38,48 +38,48 @@
       <file leaf-file-name="recommend_cf_editors.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/code/recommend_cf_editors.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-26.307692" vertical-offset="2393" max-vertical-offset="3366">
-              <caret line="181" column="0" selection-start-line="181" selection-start-column="0" selection-end-line="181" selection-end-column="0" />
+            <state vertical-scroll-proportion="-0.0" vertical-offset="289" max-vertical-offset="3383">
+              <caret line="17" column="56" selection-start-line="17" selection-start-column="56" selection-end-line="17" selection-end-column="56" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Professional wrestling.csv" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/recommendations/Professional wrestling.csv">
+      <file leaf-file-name="page_parser.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/code/page_parser.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="493">
-              <caret line="23" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="443" max-vertical-offset="2550">
+              <caret line="58" column="25" selection-start-line="58" selection-start-column="8" selection-end-line="58" selection-end-column="25" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="England.csv" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/data/recommendations/England.csv">
+      <file leaf-file-name="string_mixin.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Library/Python/3.4/lib/python/site-packages/mwparserfromhell/string_mixin.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.398167" vertical-offset="0" max-vertical-offset="982">
-              <caret line="23" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="1731" max-vertical-offset="2244">
+              <caret line="112" column="0" selection-start-line="112" selection-start-column="0" selection-end-line="112" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="recommendations_newcomers.csv" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/recommendations_newcomers.csv">
+      <file leaf-file-name="project_members.csv" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data/project_members.csv">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-0.65384614" vertical-offset="0" max-vertical-offset="24565">
-              <caret line="1" column="31" selection-start-line="1" selection-start-column="23" selection-end-line="1" selection-end-column="31" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="583006" max-vertical-offset="583661">
+              <caret line="34327" column="0" selection-start-line="34327" selection-start-column="0" selection-end-line="34327" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="recommend_editors.py" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="recommend_editors.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/code/recommend_editors.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="5.1923075" vertical-offset="7615" max-vertical-offset="13549">
-              <caret line="440" column="28" selection-start-line="440" selection-start-column="28" selection-end-line="440" selection-end-column="28" />
+            <state vertical-scroll-proportion="0.546595" vertical-offset="2721" max-vertical-offset="14416">
+              <caret line="178" column="0" selection-start-line="178" selection-start-column="0" selection-end-line="178" selection-end-column="0" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -125,7 +125,6 @@
         <option value="$PROJECT_DIR$/code/utils/__init__.py" />
         <option value="$PROJECT_DIR$/code/extract_page_categories.py" />
         <option value="$PROJECT_DIR$/code/extract_page_userboxes.py" />
-        <option value="$PROJECT_DIR$/code/page_parser.py" />
         <option value="$PROJECT_DIR$/code/archive/mutliple_edits_fetch.py" />
         <option value="$PROJECT_DIR$/data/article_projects.csv" />
         <option value="$PROJECT_DIR$/code/Classes.py" />
@@ -136,15 +135,16 @@
         <option value="$PROJECT_DIR$/data/project_pages.csv" />
         <option value="$PROJECT_DIR$/code/Gquerier.py" />
         <option value="$PROJECT_DIR$/data/project_members.csv" />
-        <option value="$PROJECT_DIR$/code/recommend_editors.py" />
+        <option value="$PROJECT_DIR$/code/GQuerier.py" />
+        <option value="$PROJECT_DIR$/code/page_parser.py" />
         <option value="$PROJECT_DIR$/code/recommend_cf_editors.py" />
+        <option value="$PROJECT_DIR$/code/recommend_editors.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1440" />
-    <option name="width" value="1920" />
-    <option name="height" value="1080" />
+    <option name="width" value="1440" />
+    <option name="height" value="900" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -239,24 +239,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="data" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="recommendations" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="wikiproject_recsys" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="wikiproject_recsys" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
               <option name="myItemId" value="code" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -272,7 +254,7 @@
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
     <property name="recentsLimit" value="5" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/code/Gquerier.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/code/recommend_cf_editors.py" />
     <property name="restartRequiresConfirmation" value="true" />
     <property name="FullScreen" value="true" />
   </component>
@@ -294,7 +276,7 @@
       <recent name="$PROJECT_DIR$/data/newcomers" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.Qquery">
+  <component name="RunManager" selected="Python.page_parser">
     <configuration default="true" type="tests" factoryName="py.test">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -543,7 +525,7 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="/usr/local/Cellar/python3/3.4.2_1/Frameworks/Python.framework/Versions/3.4/bin/python3.4" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/code/utils" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
@@ -588,7 +570,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="wikiproject_recsys" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/code/Gquerier.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/code/GQuerier.py" />
       <option name="PARAMETERS" value="" />
       <RunnerSettings RunnerId="PyDebugRunner" />
       <RunnerSettings RunnerId="PythonRunner" />
@@ -596,7 +578,27 @@
       <ConfigurationWrapper RunnerId="PythonRunner" />
       <method />
     </configuration>
-    <list size="9">
+    <configuration default="false" name="uucf" type="PythonConfigurationType" factoryName="Python">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="/usr/local/Cellar/python3/3.4.2_1/Frameworks/Python.framework/Versions/3.4/bin/python3.4" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="wikiproject_recsys" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/code/recommend_cf_editors.py" />
+      <option name="PARAMETERS" value="" />
+      <RunnerSettings RunnerId="PyDebugRunner" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PyDebugRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <list size="10">
       <item index="0" class="java.lang.String" itemvalue="Python.listen_newcomers" />
       <item index="1" class="java.lang.String" itemvalue="Python.dump_contributions" />
       <item index="2" class="java.lang.String" itemvalue="Python.get_project_articles" />
@@ -606,6 +608,7 @@
       <item index="6" class="java.lang.String" itemvalue="Python.page_parser" />
       <item index="7" class="java.lang.String" itemvalue="Python.table_generator" />
       <item index="8" class="java.lang.String" itemvalue="Python.Qquery" />
+      <item index="9" class="java.lang.String" itemvalue="Python.uucf" />
     </list>
   </component>
   <component name="ShelveChangesManager" show_recycled="false" />
@@ -621,19 +624,19 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1440" y="0" width="1920" height="1080" extended-state="0" />
-    <editor active="true" />
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3871287" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24698795" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32771084" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24907847" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.13744076" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34578314" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18393235" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.22168675" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2930693" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.29277107" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -669,27 +672,27 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/code/page_parser.py</url>
-          <line>34</line>
+          <line>35</line>
           <option name="timeStamp" value="53" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>124</line>
+          <line>135</line>
           <option name="timeStamp" value="59" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>211</line>
+          <line>221</line>
           <option name="timeStamp" value="71" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>283</line>
+          <line>293</line>
           <option name="timeStamp" value="79" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>251</line>
+          <line>261</line>
           <option name="timeStamp" value="89" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
@@ -708,22 +711,25 @@
           <option name="timeStamp" value="100" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/code/Gquerier.py</url>
-          <line>62</line>
-          <option name="timeStamp" value="106" />
+          <url>file://$PROJECT_DIR$/code/GQuerier.py</url>
+          <line>76</line>
+          <option name="timeStamp" value="110" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/code/page_parser.py</url>
+          <line>82</line>
+          <option name="timeStamp" value="113" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/code/page_parser.py</url>
+          <line>80</line>
+          <option name="timeStamp" value="116" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="107" />
+      <option name="time" value="117" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file:///Library/Python/2.7/site-packages/pandas/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="204" max-vertical-offset="1190">
-          <caret line="12" column="0" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Library/Caches/PyCharm30/python_stubs/-2125986627/__builtin__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33333334" vertical-offset="33840" max-vertical-offset="87567">
@@ -829,6 +835,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1652" max-vertical-offset="2431">
           <caret line="124" column="10" selection-start-line="124" selection-start-column="10" selection-end-line="124" selection-end-column="10" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -871,14 +878,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1471" max-vertical-offset="2312">
           <caret line="85" column="0" selection-start-line="85" selection-start-column="0" selection-end-line="85" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/code/page_parser.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1530" max-vertical-offset="1938">
-          <caret line="90" column="55" selection-start-line="90" selection-start-column="55" selection-end-line="90" selection-end-column="55" />
           <folding />
         </state>
       </provider>
@@ -1005,26 +1004,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_execfile.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.80194175" vertical-offset="216" max-vertical-offset="731">
-          <caret line="37" column="0" selection-start-line="37" selection-start-column="0" selection-end-line="37" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data/project_pages.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.12633833" vertical-offset="317450" max-vertical-offset="317917">
           <caret line="18677" column="47" selection-start-line="18677" selection-start-column="47" selection-end-line="18677" selection-end-column="47" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Library/Python/3.4/lib/python/site-packages/google/cloud/bigquery/table.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3320158" vertical-offset="7652" max-vertical-offset="18360">
-          <caret line="480" column="8" selection-start-line="480" selection-start-column="8" selection-end-line="480" selection-end-column="8" />
           <folding />
         </state>
       </provider>
@@ -1045,6 +1028,38 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/data/recommendations/England.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5019255" vertical-offset="0" max-vertical-offset="779">
+          <caret line="23" column="0" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/recommendations/Professional wrestling.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.14837906" vertical-offset="0" max-vertical-offset="802">
+          <caret line="7" column="62" selection-start-line="7" selection-start-column="62" selection-end-line="7" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/recommendations_newcomers.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.11140236" vertical-offset="0" max-vertical-offset="24565">
+          <caret line="5" column="53" selection-start-line="5" selection-start-column="53" selection-end-line="5" selection-end-column="53" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_execfile.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.80194175" vertical-offset="216" max-vertical-offset="731">
+          <caret line="37" column="0" selection-start-line="37" selection-start-column="0" selection-end-line="37" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/data/active_editors_past_week.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="764813">
@@ -1053,63 +1068,63 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data/recommendations_newcomers.csv">
+    <entry file="file://$USER_HOME$/Library/Python/3.4/lib/python/site-packages/google/cloud/bigquery/table.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-0.65384614" vertical-offset="0" max-vertical-offset="24565">
-          <caret line="1" column="31" selection-start-line="1" selection-start-column="23" selection-end-line="1" selection-end-column="31" />
+        <state vertical-scroll-proportion="0.5419223" vertical-offset="16344" max-vertical-offset="18360">
+          <caret line="997" column="35" selection-start-line="997" selection-start-column="35" selection-end-line="997" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/code/GQuerier.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-8.884615" vertical-offset="1520" max-vertical-offset="2516">
+          <caret line="103" column="0" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Python/3.4/lib/python/site-packages/mwparserfromhell/string_mixin.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1731" max-vertical-offset="2244">
+          <caret line="112" column="0" selection-start-line="112" selection-start-column="0" selection-end-line="112" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/data/project_members.csv">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="583661">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="23" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="583129" max-vertical-offset="583661">
+          <caret line="34327" column="0" selection-start-line="34327" selection-start-column="0" selection-end-line="34327" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/code/Gquerier.py">
+    <entry file="file://$PROJECT_DIR$/code/page_parser.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-14.423077" vertical-offset="1512" max-vertical-offset="2431">
-          <caret line="111" column="8" selection-start-line="111" selection-start-column="8" selection-end-line="116" selection-end-column="78" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/code/recommend_editors.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="5.1923075" vertical-offset="7615" max-vertical-offset="13549">
-          <caret line="440" column="28" selection-start-line="440" selection-start-column="28" selection-end-line="440" selection-end-column="28" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
+        <state vertical-scroll-proportion="0.0" vertical-offset="443" max-vertical-offset="2550">
+          <caret line="58" column="25" selection-start-line="58" selection-start-column="8" selection-end-line="58" selection-end-column="25" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/code/recommend_cf_editors.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-26.307692" vertical-offset="2393" max-vertical-offset="3366">
-          <caret line="181" column="0" selection-start-line="181" selection-start-column="0" selection-end-line="181" selection-end-column="0" />
+        <state vertical-scroll-proportion="-0.0" vertical-offset="289" max-vertical-offset="3383">
+          <caret line="17" column="56" selection-start-line="17" selection-start-column="56" selection-end-line="17" selection-end-column="56" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data/recommendations/Professional wrestling.csv">
+    <entry file="file://$PROJECT_DIR$/code/recommend_editors.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="493">
-          <caret line="23" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/recommendations/England.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.398167" vertical-offset="0" max-vertical-offset="982">
-          <caret line="23" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.546595" vertical-offset="2721" max-vertical-offset="14416">
+          <caret line="178" column="0" selection-start-line="178" selection-start-column="0" selection-end-line="178" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
