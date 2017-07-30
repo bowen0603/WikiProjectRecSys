@@ -17,8 +17,8 @@ class TableGenerator:
         self.projects = dict()  # keeps record of all projects
         self.users = dict()  # keeps record of all users that have been recommended, prevents duplicates
 
-        self.nbr_newcomers = 5
-        self.nbr_per_alg = 8
+        self.nbr_newcomers = 4
+        self.nbr_per_alg = 5
 
         self.file_data = []
         self.files = []
@@ -171,6 +171,7 @@ class TableGenerator:
 
 
 def main():
+
 
     table_generator = TableGenerator()
     table_generator.execute()

@@ -434,9 +434,13 @@ class RecommendExperienced():
         fname = cwd + "/data/project_members.csv"
         if os.path.isfile(fname):
             print("### Reading members of WikiProjects from file ###")
+            header = True
             for line in open(fname, 'r'):
-                project = line.split('**')[0].strip()
-                contributor = line.split('**')[1].strip()
+                if header:
+                    header = False
+                    continue
+                project = line.split('*')[0].strip()
+                contributor = line.split('*')[1].strip()
                 if project in self.dict_project_contributors:
                     self.dict_project_contributors[project].append(contributor)
                 else:
@@ -464,8 +468,9 @@ class RecommendExperienced():
                 print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
                                                                                             len(contributors)))
                 # write into files
+                print("wikiproject*editor_text", file=fout)
                 for contributor in contributors:
-                    print("{}**{}".format(project, contributor), file=fout)
+                    print("{}*{}".format(project, contributor), file=fout)
         print()
 
 
@@ -774,6 +779,7 @@ def main():
     # if len(argv) != 2:
     # print("Usage: <active_editors> <sample_projects> <bot_list> <article_projects>")
     # return
+    para1 = argv[1]
 
     rec_exp = RecommendExperienced(argv)
     rec_exp.run()
