@@ -9,6 +9,9 @@ __author__ = 'bobo'
 Related APIs for different methods
 1. identify_newcomers_and_experienced_editors(): https://www.mediawiki.org/w/api.php?action=help&modules=query%2Busers
 TODO: need to handle maximum request threshold and sleeping...
+
+2. Create active editors in the past week to start with:
+    https://quarry.wmflabs.org/query/20246
 """
 import requests
 from time import sleep

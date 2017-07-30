@@ -57,6 +57,8 @@ class PageParser:
 
     # TODO: batch of editors or just a small amount?
     def is_blocked_editor(self, user_name):
+
+        # check user talk page
         try:
             query = self.url_talk_user + user_name
             response = requests.get(query).json()
@@ -73,7 +75,6 @@ class PageParser:
             return True
 
         wikicode = mwp.parse(page_text)
-
         if page_ns == 3:
             comments = wikicode.filter_comments()
             for comment in comments:
@@ -86,6 +87,31 @@ class PageParser:
                     return True
 
                 if content.contains('Template:') and content.contains('vandal'):
+                    return True
+
+        # check user page
+        try:
+            query = self.url_user + user_name
+            response = requests.get(query).json()
+
+            page = list(response['query']['pages'].items())[0][1]
+            page_ns = page['ns']
+            page_text = page['revisions'][0]['*']
+
+        except KeyError:
+            if "error" in response:
+                print("Error occurs when parsing article talk page. "
+                      "Code: {}; Info {}".format(response['error']['code'],
+                                                response['error']['info']))
+            return True
+
+        wikicode = mwp.parse(page_text)
+        if page_ns == 2:
+            templates = wikicode.filter_templates()
+            for template in templates:
+                if template.name.contains('banned'):
+                    return True
+                if template.name.contains('blocked'):
                     return True
 
         return False
