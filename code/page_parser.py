@@ -164,10 +164,10 @@ class PageParser:
     def extract_projects_from_userboxes(self, userboxes):
         return None
 
-def main():
-    parser = PageParser()
-    # parser.extract_article_projects("")
-    # parser.extract_userboxes("")
-    parser.is_blocked_editor("")
-
-main()
+# def main():
+#     parser = PageParser()
+#     # parser.extract_article_projects("")
+#     # parser.extract_userboxes("")
+#     parser.is_blocked_editor("")
+#
+# main()

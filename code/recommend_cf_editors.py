@@ -6,7 +6,8 @@ class UUCF:
 
     def __init__(self):
 
-        self.query = QueryHandler()
+        # self.query = QueryHandler()
+        self.query = None
         self.top_n = 20
         self.dataset = "bowen_script_uucf"
 
@@ -16,7 +17,7 @@ class UUCF:
         dict_schema = [("user_text", "STRING")]
         self.query.create_table(self.dataset, "experienced_editors", dict_schema)
         # TODO: change the file: experienced_editors.csv
-        self.query.load_data_from_file(self.dataset, "experienced_editors", "data/active_editors_past_week.csv")
+        self.query.load_data_from_file(self.dataset, "experienced_editors", "data/experienced_editors.csv")
 
         # upload project members
         dict_schema = (("wikiproject", "STRING"), ("user_text", "STRING"))
@@ -187,8 +188,8 @@ class UUCF:
         self.recommend_editors()
 
 
-def main():
-    uucf = UUCF()
-    uucf.execute()
-
-main()
+# def main():
+#     uucf = UUCF()
+#     uucf.execute()
+#
+# main()
