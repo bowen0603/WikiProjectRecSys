@@ -19,7 +19,7 @@ TODO: need to handle maximum request threshold and sleeping...
  Files the system will collect or read from generated file
 (1) project_pages: collect the pages within the scope of the project
 (2) project_members.csv: the contributors of the project
-(3) experienced_editors.csv: editors who made 100+ edits
+(3) valid_experienced_editors.csv: editors who made 100+ edits and were valid
 (4) editor_validation.csv: editors who are not blocked or vandal
 
  Files uploaded outside the system
@@ -49,6 +49,12 @@ class RecommendExperienced():
     def __init__(self, argv):
 
         # TODO to chagne
+        self.const_one_month_in_days = 30
+        self.threshold_very_active = 100
+        self.threshold_active = 5
+        self.const_very_active = "Very Active"
+        self.const_active = "Active"
+
         self.const_recommendation_nbr = 20  # 20
         self.const_max_requests = 500  # 500
         self.constr_newcomer_days = 10
@@ -59,10 +65,9 @@ class RecommendExperienced():
         self.list_bots = []
         self.list_sample_projects = []
 
-        self.dict_editor_text_id = {}
+        self.dict_exp_editor_text_id = {}
         self.dict_editor_text_editcount = {}
         self.dict_editor_last_edit_datetime = {}
-        self.dict_editor_is_valid = self.read_editor_validation_from_file()
         # computed by the contributors of project related pages
         # self.dict_project_members = {}
         self.dict_project_sub_pages = {}
@@ -70,11 +75,17 @@ class RecommendExperienced():
         self.dict_page_title_id = {}
         self.dict_project_contributors = {}
 
+        self.set_valid_newcomers = set()
+        self.set_valid_exp_editors = set()
+
         self.dict_newcomer_text_id = {}
         self.dict_editor_regstr_time = {}
         self.dict_newcomer_editcount = {}
         self.dict_newcomer_first_edit_article = {}
         self.dict_editor_project_talker_nbr = {}
+        self.dict_topic_editor_first_category = {}
+        self.dict_topic_editor_second_category = {}
+        self.dict_editor_status = {}
 
         self.exp_editor_thr = 100
 
@@ -98,6 +109,61 @@ class RecommendExperienced():
         self.dict_project_categories = self.read_project_categories()
 
 
+    def identify_valid_newcomers_and_experienced_editors(self):
+        cwd = os.getcwd()
+        fname = cwd + "/data/valid_experienced_editors.csv"
+
+        if os.path.isfile(fname):
+            print("### Reading valid experienced editors and their info from file ###")
+            header = True
+            for line in open(fname, 'r'):
+                if header:
+                    header = False
+                    continue
+                user_text = line.split('*')[0]
+                self.dict_newcomer_text_id[user_text] = line.split('*')[1]
+                self.dict_editor_text_editcount[user_text] = int(line.split('*')[2])
+                self.dict_editor_regstr_time[user_text] = line.split('*')[3]
+                self.dict_editor_last_edit_datetime[user_text] = line.split('*')[4].strip()
+
+                self.set_valid_exp_editors.add(user_text)
+            print("Reading {} valid experienced editors from file".format(len(self.set_valid_exp_editors)))
+        else:
+
+            self.identify_newcomers_and_experienced_editors()
+            self.remove_blocked_or_vandal_editors()
+
+            self.write_valid_experienced_editors_to_file()
+
+
+    def remove_blocked_or_vandal_editors(self):
+        print('### Removing blocked or vandal newcomers and experienced editors ###')
+        cnt_editor, set_editors = 0, set()
+        for editor_text in self.dict_newcomer_text_id.keys():
+            if cnt_editor < 45:
+                cnt_editor += 1
+                set_editors.add(editor_text)
+            else:
+                valid_editors = self.page_parser.check_editors_validation(set_editors)
+                for valid_editor in valid_editors.keys():
+                    if valid_editors[valid_editor]:
+                        self.set_valid_newcomers.add(valid_editor)
+                cnt_editor, set_editors = 0, set()
+
+        cnt_editor, set_editors = 0, set()
+        for editor_text in self.dict_exp_editor_text_id.keys():
+            if cnt_editor < 45:
+                cnt_editor += 1
+                set_editors.add(editor_text)
+            else:
+                valid_editors = self.page_parser.check_editors_validation(set_editors)
+                for valid_editor in valid_editors.keys():
+                    if valid_editors[valid_editor]:
+                        self.set_valid_exp_editors.add(valid_editor)
+                cnt_editor, set_editors = 0, set()
+        print("#### {} valid newcomers, and {} valid experienced editors".format(len(self.set_valid_newcomers),
+                                                                                 len(self.set_valid_exp_editors)))
+
     # query the active editors to obtain their total edits in Wikipedia
     def identify_newcomers_and_experienced_editors(self):
         print("### Identifying newcomers and active experienced editors to recommend ###")
@@ -109,16 +175,6 @@ class RecommendExperienced():
                 if cnt_total_editor > self.debug_nbr:
                     break
                 cnt_total_editor += 1
-
-            # check if the editor is vandal or blocked
-            if editor_text in self.dict_editor_is_valid:
-                if not self.dict_editor_is_valid[editor_text]:
-                    continue
-
-            # is_blocked = self.page_parser.is_blocked_editor(editor_text)
-            # self.dict_editor_is_valid[editor_text] = not is_blocked
-            # if is_blocked:
-            #     continue
 
             # create a list of editors to request at the same time (50 maximum)
             if cnt_editor < 45:
@@ -152,7 +208,7 @@ class RecommendExperienced():
 
                         # collect data for experienced editors
                         if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
-                            self.dict_editor_text_id[editor_text] = editor_id
+                            self.dict_exp_editor_text_id[editor_text] = editor_id
                             self.dict_editor_text_editcount[editor_text] = editor_editcount
 
                             self.dict_editor_regstr_time[editor_text] = regstr_datetime
@@ -173,18 +229,20 @@ class RecommendExperienced():
 
                 cnt_editor, str_editors = 0, ""
         print("Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
-                                                                                          len(self.dict_editor_text_id),
-                                                                                          len(self.dict_newcomer_text_id)))
+                                                                                            len(self.dict_exp_editor_text_id),
+                                                                                            len(self.dict_newcomer_text_id)))
 
     def recommend_editors(self):
-        print("#### Working on {} newcomers... ####".format(len(self.dict_newcomer_text_id)))
-        self.fetch_history(self.dict_newcomer_text_id.keys(), True)
+        print("#### Working on {} newcomers... ####".format(len(self.set_valid_newcomers)))
+        self.fetch_history(self.set_valid_newcomers, True)
         self.write_newcomer_recommendations()
 
-        print("#### Working on {} experienced editors... ####".format(len(self.dict_editor_text_id)))
-        self.fetch_history(self.dict_editor_text_id.keys(), False)
+        print("#### Working on {} experienced editors... ####".format(len(self.set_valid_exp_editors)))
+        self.fetch_history(self.set_valid_exp_editors, False)
+
         self.write_rule_recommendations()
         self.write_bonds_recommendations()
+        self.write_topic_recommendations()
 
 
     def fetch_history(self, editor_list, is_newcomers):
@@ -199,7 +257,9 @@ class RecommendExperienced():
 
             # print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
             editor_cnt += 1
+            cnt_mainpage_edits = 0
             latest_datetime = datetime.fromordinal(1)
+            current_datetime = datetime.now()
 
             edits_ns0_articles = {}
             edits_ns3_users = {}
@@ -209,19 +269,25 @@ class RecommendExperienced():
 
             # Just fetch 500 edits using one query for each editor
             try:
+
+
                 query = self.url_usercontb + "uclimit=" + str(self.const_max_requests) + "&ucnamespace=0|3|4|5&" \
-                                                                                         "ucprop=title|timestamp|parsedcomment|sizediff|ids&ucuser=" + editor_text
+                                                                                         "ucprop=title|timestamp|parsedcomment|flags|ids&ucuser=" + editor_text
                 response = requests.get(query).json()
 
+
                 for usercontrib in response['query']['usercontribs']:
+
                     page_title = usercontrib['title']
                     page_id = usercontrib['pageid']
                     ns = usercontrib['ns']
                     userid = usercontrib['userid']
-                    comment = usercontrib['parsedcomment']
-
-                    if comment.startswith('Revert'):
-                        continue
+                    if 'parsedcomment' in usercontrib:
+                        comment = usercontrib['parsedcomment']
+                        if comment.startswith('Revert'):
+                            continue
+                        # if usercontrib['flags'] == 'minor':
+                        #     continue
 
                     edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
                     latest_datetime = max(edit_datetime, latest_datetime)
@@ -236,6 +302,10 @@ class RecommendExperienced():
                         edits_ns0_articles[page_title] = 1 if page_title not in edits_ns0_articles \
                             else edits_ns0_articles[page_title] + 1
 
+                        # count the number of edits within 30 days
+                        if (current_datetime - edit_datetime).days <= self.const_one_month_in_days:
+                            cnt_mainpage_edits += 1
+
                     elif ns == 3:
                         if not is_newcomers:
                             edits_ns3_users[page_title] = 1 if page_title not in edits_ns3_users \
@@ -244,7 +314,10 @@ class RecommendExperienced():
                         # don't really need to do anything for edits on project pages,
                         # since project contributors have been identified
                         pass
-
+            # except :
+            #     import sys
+            #     e = sys.exc_info()[0]
+            #     print("Error: {}".format(e))
             except KeyError:
                 if self.catch_error_to_sleep(response):
                     continue
@@ -258,6 +331,7 @@ class RecommendExperienced():
                 print("Throwing except: {}".format(response))
                 continue
 
+
             # process editor's revisions for recommendations
 
             # handle rule-based recommendation by article page edits
@@ -266,6 +340,13 @@ class RecommendExperienced():
                 # TODO: need to get the first edit for newcomers
                 self.maintain_project_newcomer_recommendation_lists(editor_text, stats_edits_projects_articles)
             else:
+
+                if cnt_mainpage_edits >= self.threshold_very_active:
+                    self.dict_editor_status[editor_text] = self.const_very_active
+                elif cnt_mainpage_edits >= self.threshold_active:
+                    self.dict_editor_status[editor_text] = self.const_active
+                else:
+                    continue
 
                 editor_topic_vector = self.compute_editor_topic_vector(edits_ns0_articles)
                 # ignore not valid editors
@@ -281,14 +362,15 @@ class RecommendExperienced():
                     self.compute_project_user_edits(edits_ns3_users)
                 self.maintain_project_bonds_based_recommendation_lists(editor_text, stats_edits_projects_users)
 
-
-
                 # editor - project - edits
                 # TODO: identify himself as project contributor
                 # stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
 
     def maintain_project_topic_based_recommendation_lists(self, user_text, editor_topic_vector):
         for project in self.dict_project_categories:
+            if project not in self.list_sample_projects:
+                continue
+
             if project in ['Women', 'Women artists', 'Women\'s History', 'Women scientists']:
                 continue
 
@@ -300,15 +382,39 @@ class RecommendExperienced():
             dict_recommended_editors = self.dict_topic_based_recommendation[project]
             dict_recommended_editors[user_text] = val
 
+            value_max = -1
+            category_max = None
+            for category in editor_topic_vector:
+                if category == 'Not Found':
+                    continue
+                if editor_topic_vector[category] > value_max:
+                    value_max = editor_topic_vector[category]
+                    category_max = category
+            self.dict_topic_editor_first_category[user_text] = category_max
+
+            value_max = -1
+            category_sec_max = None
+            for category in editor_topic_vector:
+                if category == 'Not Found':
+                    continue
+                if editor_topic_vector[category] > value_max and category != category_max:
+                    value_max = editor_topic_vector[category]
+                    category_sec_max = category
+            self.dict_topic_editor_second_category[user_text] = category_sec_max
+
             # identify the least to recommending editor, and remove it from the list
             if len(dict_recommended_editors) > self.const_recommendation_nbr:
                 editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
                 del dict_recommended_editors[editor_min]
-
+                # del self.dict_topic_editor_first_category[editor_min]
+                # del self.dict_topic_editor_second_category[editor_min]
 
     # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
     def maintain_project_rule_based_recommendation_lists(self, user_text, stats_edits_projects_articles):
         for project in self.dict_project_contributors.keys():
+
+            if project not in self.list_sample_projects:
+                continue
 
             # skip if is project member TODO: or has userbox
             if project in self.dict_project_contributors and user_text in self.dict_project_contributors[project]:
@@ -329,6 +435,9 @@ class RecommendExperienced():
 
     def maintain_project_bonds_based_recommendation_lists(self, user_text, stats_edits_projects_users):
         for project in self.dict_project_contributors:
+
+            if project not in self.list_sample_projects:
+                continue
 
             # skip if is project member TODO: or has userbox
             if project in self.dict_project_contributors and user_text in self.dict_project_contributors[project]:
@@ -352,6 +461,7 @@ class RecommendExperienced():
             return
 
         if self.dict_newcomer_first_edit_article[editor_text].lower() in self.dict_article_projects:
+            # TODO: to keep it updated, we need to have updated the article-project file, making sure all the projects are within the scope
             projects = self.dict_article_projects[self.dict_newcomer_first_edit_article[editor_text].lower()]
             project = random.choice(projects)
 
@@ -497,22 +607,37 @@ class RecommendExperienced():
             print("### Collecting members of WikiProjects, and writing into file ###")
             fout = open(fname, 'w')
             for project in self.list_sample_projects:
+                # TODO: remove inexperienced contributors
                 contributors = set()
                 if project in self.dict_project_sub_pages:
-                    contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_pages[project]))
-                    cnt1 = len(contributors)
+
+                    print("{} # of pages.".format(len(self.dict_project_sub_pages[project])))
+                    set1 = self.search_page_contributors(self.dict_project_sub_pages[project])
+                    print(len(set1))
+                    # contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_pages[project]))
+                    # cnt1 = len(contributors)
+                    # print(cnt1)
+
+                    print("{} # of pages.".format(len(self.dict_project_sub_pages[project])))
                     # contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_pages[project]))
                     # cnt2 = len(contributors)
+                    # print(cnt2)
+                    set2 = self.search_page_contributors(self.dict_project_sub_pages[project])
+                    print(len(set2))
+                    contributors = contributors.union(set1)
+
                     # if cnt1 != cnt2:
                     #     print("Identify {} more contributors on project {}".format((cnt2-cnt1), project))
 
                 if project in self.dict_project_sub_talkpages:
                     contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_talkpages[project]))
                     cnt1 = len(contributors)
-                    # contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_talkpages[project]))
-                    # cnt2 = len(contributors)
-                    # if cnt1 != cnt2:
-                    #     print("Identify {} more contributors on project {}".format((cnt2-cnt1), project))
+                    print(cnt1)
+                    contributors = contributors.union(self.search_page_contributors(self.dict_project_sub_talkpages[project]))
+                    cnt2 = len(contributors)
+                    print(cnt2)
+                    if cnt1 != cnt2:
+                        print("Identify {} more contributors on project {}".format((cnt2-cnt1), project))
 
                 self.dict_project_contributors[project] = contributors
 
@@ -680,45 +805,55 @@ class RecommendExperienced():
         # list_recommended_editors_sorted = sorted(dict_recommended_editors.items(), key=operator.itemgetter(1))
 
         fout = open("data/recommendations_rule.csv", "w")
-        print("wikiproject**editor_text**user_id**project_edits**wp_edits**last_edit**regstr_time", file=fout)
+        print("wikiproject**editor_text**project_edits**wp_edits**last_edit**regstr_time**status", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_rule_based_recommendation[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                          self.dict_editor_text_id[editor_text],
                                                           self.dict_rule_based_recommendation[wikiproject][editor_text],
                                                           self.dict_editor_text_editcount[editor_text],
                                                           self.dict_editor_last_edit_datetime[editor_text],
-                                                          self.dict_editor_regstr_time[editor_text]), file=fout)
+                                                          self.dict_editor_regstr_time[editor_text],
+                                                          self.dict_editor_status[editor_text]), file=fout)
 
     def write_bonds_recommendations(self):
         fout = open("data/recommendations_bonds.csv", "w")
-        print("wikiproject**editor_text**user_id**pjtk_cnt**talker_cnt**wp_edits**last_edit**regstr_time", file=fout)
+        print("wikiproject**editor_text**pjtk_cnt**talker_cnt**wp_edits**last_edit**regstr_time**status", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_bonds_based_recommendation[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                              self.dict_editor_text_id[editor_text],
-                                                              self.dict_bonds_based_recommendation[wikiproject][
-                                                                  editor_text],
-                                                              self.dict_editor_project_talker_nbr[editor_text][
-                                                                  wikiproject],
+                                                              self.dict_bonds_based_recommendation[wikiproject][editor_text],
+                                                              self.dict_editor_project_talker_nbr[editor_text][wikiproject],
                                                               self.dict_editor_text_editcount[editor_text],
                                                               self.dict_editor_last_edit_datetime[editor_text],
-                                                              self.dict_editor_regstr_time[editor_text]), file=fout)
+                                                              self.dict_editor_regstr_time[editor_text],
+                                                              self.dict_editor_status[editor_text]), file=fout)
+
+    def write_topic_recommendations(self):
+        fout = open("data/recommendations_topics.csv", "w")
+        print("wikiproject**editor_text**cate_first**cate_second**wp_edits**last_edit**regstr_time**status", file=fout)
+        for wikiproject in self.list_sample_projects:
+            for editor_text in self.dict_topic_based_recommendation[wikiproject]:
+                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                              self.dict_topic_editor_first_category[editor_text],
+                                                              self.dict_topic_editor_second_category[editor_text],
+                                                              self.dict_editor_text_editcount[editor_text],
+                                                              self.dict_editor_last_edit_datetime[editor_text],
+                                                              self.dict_editor_regstr_time[editor_text],
+                                                              self.dict_editor_status[editor_text]), file=fout)
 
     def write_newcomer_recommendations(self):
         fout = open("data/recommendations_newcomers.csv", "w")
-        print("wikiproject**user_text**user_id**first_article**project_edits**wp_edits**last_edit**regstr_time",
+        print("wikiproject**user_text**first_article**project_edits**wp_edits**last_edit**regstr_time**status",
               file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                              self.dict_newcomer_text_id[editor_text],
-                                                              self.dict_newcomer_first_edit_article[editor_text],
-                                                              self.dict_project_newcomer_edits[wikiproject][
-                                                                  editor_text],
-                                                              self.dict_newcomer_editcount[editor_text],
-                                                              self.dict_editor_last_edit_datetime[editor_text],
-                                                              self.dict_editor_regstr_time[editor_text]), file=fout)
+                                                                  self.dict_newcomer_first_edit_article[editor_text],
+                                                                  self.dict_project_newcomer_edits[wikiproject][editor_text],
+                                                                  self.dict_newcomer_editcount[editor_text],
+                                                                  self.dict_editor_last_edit_datetime[editor_text],
+                                                                  self.dict_editor_regstr_time[editor_text],
+                                                                  "New"), file=fout)
 
 
     @staticmethod
@@ -867,42 +1002,18 @@ class RecommendExperienced():
                dict_project_identity_based_recommendation, dict_project_bonds_based_recommendation, \
                dict_project_newcomer_edits
 
-    def write_experienced_editors_to_file(self):
-        with open("data/experienced_editors.csv", "w") as fout:
-            print("user_text", file=fout)
-            for user_text in self.dict_editor_text_id.keys():
-                print("{}".format(user_text), file=fout)
-
-    @staticmethod
-    def read_editor_validation_from_file():
-        cwd = os.getcwd()
-        fname = cwd + "/data/editor_validation.csv"
-        dict_editor_is_valid = {}
-
-        if os.path.isfile(fname):
-            with open("data/editor_validation.csv", "r") as fin:
-                header = True
-                for line in fin:
-                    if header:
-                        header = False
-                        continue
-                    user_text = line.split('*')[0]
-                    is_valid = True if line.split('*')[1].strip() == 'True' else False
-                    dict_editor_is_valid[user_text] = is_valid
-        return dict_editor_is_valid
-
-
-    def write_editor_validation_to_file(self):
-        with open("data/editor_validation.csv", "w") as fout:
-            print("user_text,is_valid", file=fout)
-            for user_text in self.dict_editor_is_valid.keys():
-                print("{}*{}".format(user_text,
-                                     self.dict_editor_is_valid[user_text]), file=fout)
-
+    def write_valid_experienced_editors_to_file(self):
+        with open("data/valid_experienced_editors.csv", "w") as fout:
+            print("user_text,user_id,editcount,regtr_time,last_edit", file=fout)
+            for user_text in self.set_valid_exp_editors:
+                print("{}*{}*{}*{},{}".format(user_text,
+                                               self.dict_newcomer_text_id[user_text],
+                                               self.dict_editor_text_editcount[user_text],
+                                               self.dict_editor_regstr_time[user_text],
+                                               self.dict_editor_last_edit_datetime[user_text]), file=fout)
 
     @staticmethod
     def read_bot_list():
-
         filename = "data/bot_list.csv"
         # each line only contain an editor name
         list_bot = set()
@@ -910,15 +1021,13 @@ class RecommendExperienced():
             list_bot.add(line.strip())
         return list_bot
 
-    def run(self):
+    def execute(self):
 
         # pre-process
         self.collect_project_related_pages()
         self.identify_project_members_and_edits()
-        self.identify_newcomers_and_experienced_editors()
 
-        self.write_experienced_editors_to_file()
-        self.write_editor_validation_to_file()
+        self.identify_valid_newcomers_and_experienced_editors()
 
         # recommend editors
         self.recommend_editors()
@@ -937,7 +1046,7 @@ def main():
     para1 = argv[1]
 
     rec_exp = RecommendExperienced(argv)
-    rec_exp.run()
+    rec_exp.execute()
 
 
 import time
