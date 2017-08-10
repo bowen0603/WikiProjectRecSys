@@ -7,8 +7,9 @@ class PageParser:
 
     def __init__(self):
         self.url_article = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
-        self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
-        self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
+        self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
+        # self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
+        # self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
 
     def extract_article_projects(self, page_title):
 
@@ -55,7 +56,90 @@ class PageParser:
 
         return wikiprojects
 
-    # TODO: batch of editors or just a small amount?
+    def check_editors_validation(self, set_editors):
+        user_talk_pages, user_pages = "", ""
+        for editor_text in set_editors:
+            user_talk_pages += 'User talk:' + editor_text + '|'
+            user_pages += 'User:' + editor_text + '|'
+
+        editor_validation = {}
+        empty_page = {}
+        try:
+            query = self.url_user + user_talk_pages
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                if 'invalid' in pages[page]:
+                    continue
+
+                username = pages[page]['title'].replace("User talk:", "")
+                page_ns = pages[page]['ns']
+                try:
+                    page_text = pages[page]['revisions'][0]['*']
+                except KeyError:
+                    empty_page[username] = True
+                    continue
+
+                is_valid = True
+                wikicode = mwp.parse(page_text)
+                if page_ns == 3:
+                    comments = wikicode.filter_comments()
+                    for comment in comments:
+
+                        content = comment.contents
+                        if content.contains('Template:') and content.contains('block'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('vandalism'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('vandal'):
+                            is_valid = False
+
+                editor_validation[username] = is_valid
+
+        except KeyError:
+            if "error" in response:
+                print("Error occurs when parsing article talk page. "
+                      "Code: {}; Info {}".format(response['error']['code'], response['error']['info']))
+
+        try:
+            query = self.url_user + user_pages
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+
+                if 'invalid' in pages[page]:
+                    continue
+
+                username = pages[page]['title'].replace('User:', "")
+                page_ns = pages[page]['ns']
+
+                try:
+                    page_text = pages[page]['revisions'][0]['*']
+                except KeyError:
+                    if username in empty_page:
+                        editor_validation[username] = False
+                    continue
+
+                is_valid = True
+                wikicode = mwp.parse(page_text)
+                if page_ns == 2:
+                    templates = wikicode.filter_templates()
+                    for template in templates:
+                        if template.name.contains('banned'):
+                            is_valid = False
+                        if template.name.contains('blocked'):
+                            is_valid = False
+
+                if not is_valid:
+                    editor_validation[username] = is_valid
+
+        except KeyError:
+            if "error" in response:
+                print("Error occurs when parsing article talk page. "
+                      "Code: {}; Info {}".format(response['error']['code'], response['error']['info']))
+
+        return editor_validation
+
     def is_blocked_editor(self, user_name):
 
         # check user talk page
