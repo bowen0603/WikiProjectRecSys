@@ -8,6 +8,7 @@ class PageParser:
     def __init__(self):
         self.url_article = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
         self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
+        self.url_page = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
         # self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
         # self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
 
@@ -41,18 +42,18 @@ class PageParser:
         wikiprojects = []
 
         if page_ns == 1:
-                templates = wikicode.filter_templates()
-                for template in templates:
-                    if template.name == 'WikiProjectBannerShell':
-                        continue
+            templates = wikicode.filter_templates()
+            for template in templates:
+                if template.name == 'WikiProjectBannerShell':
+                    continue
 
-                    # todo check if need original names
-                    if template.name.startswith('WikiProject '):
-                        wikiproject = str(template.name).replace("WikiProject ", "").strip()
-                        wikiprojects.append(wikiproject)
+                # todo check if need original names
+                if template.name.startswith('WikiProject '):
+                    wikiproject = str(template.name).replace("WikiProject ", "").strip()
+                    wikiprojects.append(wikiproject)
 
-                    if template.name.startswith('WIR'):
-                        wikiprojects.append("women in red")
+                if template.name.startswith('WIR'):
+                    wikiprojects.append("women in red")
 
         return wikiprojects
 
@@ -248,10 +249,72 @@ class PageParser:
     def extract_projects_from_userboxes(self, userboxes):
         return None
 
-# def main():
-#     parser = PageParser()
-#     # parser.extract_article_projects("")
-#     # parser.extract_userboxes("")
-#     parser.is_blocked_editor("")
-#
-# main()
+    def WIR_report_parser(self):
+        # TODO: make the month flexible
+        page = "Wikipedia:WikiProject Women in Red/Metrics/August 2017"
+        list_articles = []
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                page_text = pages[page]['revisions'][0]['*']
+                wikicode = mwp.parse(page_text)
+                for article in wikicode.filter_wikilinks():
+                    if "Category" in article:
+                        continue
+
+                    list_articles.append(article.replace("[[", "").replace("]]", ""))
+
+        except Exception:
+            print("Error when parsing WIR pages")
+
+        return list_articles
+
+
+    def identify_WIR_article_creators(self):
+        dict_editor_creators = {}
+        dict_editor_article = {}
+        for article in self.WIR_report_parser():
+
+            query = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp|user&rvdir=newer&format=json&titles="+ article
+            # query = self.url_page + page
+            try:
+                pages = requests.get(query).json()['query']['pages']
+                for page_id in pages:
+                    page = pages[page_id]
+                    page_title = page['title']
+                    for rev in page['revisions']:
+                        user_text = rev['user']
+                        timestamp = rev['timestamp']
+
+                        dict_editor_article[user_text] = article
+                        if user_text in dict_editor_creators:
+                            dict_editor_creators[user_text] += 1
+                        else:
+                            dict_editor_creators[user_text] = 1
+            except Exception:
+                print("Errors")
+
+        import operator
+        sorted_x = sorted(dict_editor_creators.items(), key=operator.itemgetter(1), reverse=True)
+
+        list_editor_sorted = []
+        dict_editor_page_creation = {}
+        for (editor_text, creation_cnt) in sorted_x:
+            list_editor_sorted.append(editor_text)
+            dict_editor_page_creation[editor_text] = creation_cnt
+
+        return list_editor_sorted, dict_editor_page_creation, dict_editor_article
+
+
+
+def main():
+    parser = PageParser()
+    # parser.extract_article_projects("")
+    # parser.extract_userboxes("")
+    # parser.is_blocked_editor("")
+    # parser.report_parser()
+    parser.identify_WIR_article_creators()
+
+main()
