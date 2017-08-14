@@ -102,7 +102,7 @@ class RecommendExperienced():
         self.list_bots = self.read_bot_list()
 
         self.page_parser = PageParser()
-        self.table_generator = TableGenerator()
+        # self.table_generator = TableGenerator()
         self.uucf = UUCF()
 
         # the projects an article within the scope of - parsed from article talk pages
@@ -942,7 +942,7 @@ class RecommendExperienced():
     def read_project_categories():
         print("### Reading categories of the projects from file... ###")
         projects_categories = {}
-        filename = "/data/pre-processing/projects_categories.csv"
+        filename = os.getcwd() + "/data/pre-processing/projects_categories.csv"
         if os.path.isfile(filename):
             with open(filename, 'r') as fin:
                 next(fin)
@@ -982,7 +982,7 @@ class RecommendExperienced():
     @staticmethod
     def read_article_projects():
         print("### Reading projects of the articles from file... ###")
-        filename = "/data/pre-processing/articles_top25_projects.csv"
+        filename = os.getcwd() + "/data/pre-processing/articles_top25_projects.csv"
         article_projects = {}
         if os.path.isfile(filename):
             for line in open(filename, 'r'):
@@ -1003,7 +1003,7 @@ class RecommendExperienced():
     def read_article_categories():
 
         print("### Reading categories of the articles from file... ###")
-        filename = "/data/pre-processing/articles_categories.csv"
+        filename = os.getcwd() + "/data/pre-processing/articles_categories.csv"
 
         article_categories = {}
         debug = True
@@ -1261,7 +1261,8 @@ class RecommendExperienced():
 
                 cnt_editor, str_editors = 0, ""
 
-        fout = open("/data/recommendations/recommendations_WIR.csv", "w")
+        cwd = os.getcwd()
+        fout = open(cwd + "/data/recommendations/recommendations_WIR.csv", "w")
         print("editor_text,page_created,editcount,regstr_ts,article,status", file=fout)
         for editor_text in editors_WIR:
             print("{}**{}**{}**{}**{}**{}".format(editor_text,
@@ -1283,7 +1284,7 @@ class RecommendExperienced():
 
         self.identify_valid_newcomers_and_experienced_editors()
 
-        # recommend editors
+        # recommend editors TODO: add this back
         self.recommend_editors()
 
         # recommend uu cf based editors
@@ -1302,7 +1303,9 @@ def main():
 
     rec_exp.execute()
     rec_exp.recommend_editors_WIR()
-    rec_exp.table_generator.create_tables()
+
+    table_generator = TableGenerator(rec_exp.dict_editor_text_editcount, rec_exp.dict_editor_regstr_time, rec_exp.dict_editor_status)
+    table_generator.create_tables()
 
 
 
