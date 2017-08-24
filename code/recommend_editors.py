@@ -76,6 +76,7 @@ class RecommendExperienced():
         self.dict_project_sub_talkpages = {}
         self.dict_page_title_id = {}
         self.dict_project_contributors = {}
+        self.dict_member_article_edited = {}
 
         self.set_valid_newcomers = set()
         self.set_valid_exp_editors = set()
@@ -98,12 +99,12 @@ class RecommendExperienced():
 
         self.list_active_editors = self.read_active_editors()
         self.list_sample_projects, self.dict_topic_based_recommendation, self.dict_rule_based_recommendation, \
-            self.dict_bonds_based_recommendation, self.dict_project_newcomer_edits = self.read_sample_projects()
+            self.dict_bonds_based_recommendation, self.dict_uucf_based_recommendation, \
+            self.dict_project_newcomer_edits, self.dict_uucf_similar_project_member, self.dict_uucf_common_edits = self.read_sample_projects()
         self.list_bots = self.read_bot_list()
 
         self.page_parser = PageParser()
         # self.table_generator = TableGenerator()
-        self.uucf = UUCF()
 
         # the projects an article within the scope of - parsed from article talk pages
         self.dict_article_projects = self.read_article_projects()
@@ -290,6 +291,7 @@ class RecommendExperienced():
         self.write_rule_recommendations()
         self.write_bonds_recommendations()
         self.write_topic_recommendations()
+        self.write_uucf_recommendations()
 
 
     def fetch_history(self, editor_list, is_newcomers):
@@ -312,17 +314,13 @@ class RecommendExperienced():
             current_datetime = datetime.now()
 
             edits_ns0_articles = {}
+            projects_within_30days = {}
             edits_ns3_users = {}
-
-            # todo: extract projects from userboxes
-            # projects_userbox = self.page_parser.extract_user_projects(editor_text)
 
             # Just fetch 500 edits using one query for each editor
             try:
 
-
-                query = self.url_usercontb + "uclimit=" + str(self.const_max_requests) + "&ucnamespace=0|3|4|5&" \
-                                                                                         "ucprop=title|timestamp|parsedcomment|flags|ids&ucuser=" + editor_text
+                query = self.url_usercontb + "uclimit=" + str(self.const_max_requests) + "&ucprop=title|timestamp|parsedcomment|flags|ids&ucuser=" + editor_text
                 response = requests.get(query).json()
 
 
@@ -344,12 +342,17 @@ class RecommendExperienced():
                         # if usercontrib['flags'] == 'minor':
                         #     continue
 
-
+                        if 'flags' in usercontrib:
+                            print(usercontrib['flags'])
+                            continue
 
                     if ns == 0:
-                        # TODO: check if this is the first edit of the editor ...
-                        if is_newcomers and editor_text not in self.dict_newcomer_first_edit_article:
-                            self.dict_newcomer_first_edit_article[editor_text] = page_title
+                        if is_newcomers:
+                            if editor_text not in self.dict_newcomer_first_edit_article:
+                                self.dict_newcomer_first_edit_article[editor_text] = page_title
+                            else:
+                                # keep update until the last record which is the first edit of the editor
+                                self.dict_newcomer_first_edit_article[editor_text] = page_title
 
                         page_title = page_title.lower()
                         edits_ns0_articles[page_title] = 1 if page_title not in edits_ns0_articles \
@@ -358,6 +361,14 @@ class RecommendExperienced():
                         # count the number of edits within 30 days
                         if (current_datetime - edit_datetime).days <= self.const_one_month_in_days:
                             cnt_mainpage_edits += 1
+
+                            # identify active projects within 30 days.
+                            if page_title in self.dict_article_projects:
+                                for project in self.dict_article_projects[page_title]:
+                                    if project in projects_within_30days:
+                                        projects_within_30days[project] += 1
+                                    else:
+                                        projects_within_30days[project] = 1
 
                     elif ns == 3:
                         if not is_newcomers:
@@ -384,13 +395,17 @@ class RecommendExperienced():
                 print("Throwing except: {}".format(response))
                 continue
 
+            # only select active projects for further recommendations
+            list_candidate_projects = []
+            for project in projects_within_30days:
+                if projects_within_30days[project] >= 2:
+                    list_candidate_projects.append(project)
 
             # process editor's revisions for recommendations
 
             # handle rule-based recommendation by article page edits
             stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_articles)
             if is_newcomers:
-                # TODO: need to get the first edit for newcomers
                 self.maintain_project_newcomer_recommendation_lists(editor_text, stats_edits_projects_articles)
             else:
 
@@ -406,22 +421,23 @@ class RecommendExperienced():
                 if not editor_topic_vector:
                     continue
 
-                self.maintain_project_topic_based_recommendation_lists(editor_text, editor_topic_vector)
+                self.maintain_project_topic_based_recommendation_lists(editor_text, editor_topic_vector, list_candidate_projects)
 
-                self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles)
+                self.maintain_project_rule_based_recommendation_lists(editor_text, stats_edits_projects_articles, list_candidate_projects)
 
-                # TODO: insert sort to get topic editors who edited project related pages
                 stats_edits_projects_users, self.dict_editor_project_talker_nbr[editor_text] = \
                     self.compute_project_user_edits(edits_ns3_users)
-                self.maintain_project_bonds_based_recommendation_lists(editor_text, stats_edits_projects_users)
+                self.maintain_project_bonds_based_recommendation_lists(editor_text, stats_edits_projects_users, list_candidate_projects)
 
-                # editor - project - edits
-                # TODO: identify himself as project contributor
-                # stats_edits_projects_pages = self.compute_project_page_edits(edits_ns45_projects)
+                self.main_project_uucf_recommendation_list(editor_text, edits_ns0_articles, list_candidate_projects)
 
-    def maintain_project_topic_based_recommendation_lists(self, user_text, editor_topic_vector):
+
+    def maintain_project_topic_based_recommendation_lists(self, user_text, editor_topic_vector, list_candidate_projects):
         for project in self.dict_project_categories:
             if project not in self.list_sample_projects:
+                continue
+
+            if project not in list_candidate_projects:
                 continue
 
             if project in ['Women', 'Women artists', 'Women\'s History', 'Women scientists']:
@@ -466,10 +482,13 @@ class RecommendExperienced():
                 # del self.dict_topic_editor_second_category[editor_min]
 
     # maintain the list in sorted order by editors who made top N edits on artiles within the scope of the project
-    def maintain_project_rule_based_recommendation_lists(self, user_text, stats_edits_projects_articles):
+    def maintain_project_rule_based_recommendation_lists(self, user_text, stats_edits_projects_articles, list_candidate_projects):
         for project in self.dict_project_contributors.keys():
 
             if project not in self.list_sample_projects:
+                continue
+
+            if project not in list_candidate_projects:
                 continue
 
             # skip if is project member
@@ -489,10 +508,13 @@ class RecommendExperienced():
                 del dict_recommended_editors[editor_min]
 
 
-    def maintain_project_bonds_based_recommendation_lists(self, user_text, stats_edits_projects_users):
+    def maintain_project_bonds_based_recommendation_lists(self, user_text, stats_edits_projects_users, list_candidate_projects):
         for project in self.dict_project_contributors:
 
             if project not in self.list_sample_projects:
+                continue
+
+            if project not in list_candidate_projects:
                 continue
 
             # skip if is project member
@@ -505,6 +527,49 @@ class RecommendExperienced():
             # insert the new editor
             dict_recommended_editors = self.dict_bonds_based_recommendation[project]
             dict_recommended_editors[user_text] = stats_edits_projects_users[project]
+
+            if len(dict_recommended_editors) > self.const_recommendation_nbr:
+                editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
+                del dict_recommended_editors[editor_min]
+
+
+    def main_project_uucf_recommendation_list(self, editor_text, edits_ns0_articles, list_candidate_projects):
+        for project in self.dict_project_contributors:
+
+            if project not in self.list_sample_projects:
+                continue
+
+            if project not in list_candidate_projects:
+                continue
+
+            # skip if is project member
+            if project in self.dict_project_contributors and editor_text in self.dict_project_contributors[project]:
+                continue
+
+
+            total_score = 0
+            max_score = -1
+
+            for member in self.dict_project_contributors[project]:
+                if member in self.list_bots:
+                    continue
+
+                set_article_member = self.dict_member_article_edited[member]
+                set_article_editor = set(edits_ns0_articles.keys())
+                article_shared = set_article_member & set_article_editor
+
+                # insersect(A,B)/(sqrt(len(A))*sqrt(len(B)))
+                uucf_score = 1.0 * len(article_shared) / sqrt(len(set_article_member) * len(set_article_editor))
+                total_score += uucf_score
+                if uucf_score > max_score:
+                    max_score = uucf_score
+                    self.dict_uucf_similar_project_member[project][editor_text] = member
+                    self.dict_uucf_common_edits[project][editor_text] = len(article_shared)
+
+
+            # insert the new editor
+            dict_recommended_editors = self.dict_uucf_based_recommendation[project]
+            dict_recommended_editors[user_text] = total_score
 
             if len(dict_recommended_editors) > self.const_recommendation_nbr:
                 editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
@@ -693,7 +758,77 @@ class RecommendExperienced():
                 print("Unioned number for project: {}, {}".format(project, len(self.dict_project_contributors[project])))
 
             self.write_valid_project_contributors_to_file()
+        # todo: for project members, collect articles in their most recent 500 edits
+        self.collect_member_article_edits()
         print()
+
+    def collect_member_article_edits(self):
+        print("### Collecting member article edits ###")
+        for project in self.list_sample_projects:
+            if project not in self.dict_project_contributors:
+                continue
+            for member in self.dict_project_contributors[project]:
+
+                if member == '':
+                    continue
+
+                # print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
+                set_article_pages = set()
+
+                cnt_mainpage_edits = 0
+                latest_datetime = datetime.fromordinal(1)
+                current_datetime = datetime.now()
+
+                edits_ns0_articles = {}
+                projects_within_30days = {}
+                edits_ns3_users = {}
+
+                # Just fetch 500 edits using one query for each editor
+                try:
+
+                    query = self.url_usercontb + "uclimit=" + str(
+                        self.const_max_requests) + "&ucprop=title|timestamp|parsedcomment|flags|ids&ucuser=" + member
+                    response = requests.get(query).json()
+
+                    for usercontrib in response['query']['usercontribs']:
+
+                        page_title = usercontrib['title']
+                        ns = usercontrib['ns']
+
+                        if 'parsedcomment' in usercontrib:
+                            comment = usercontrib['parsedcomment']
+                            if comment.startswith('Revert'):
+                                continue
+                            # if usercontrib['flags'] == 'minor':
+                            #     continue
+
+                            if 'flags' in usercontrib:
+                                print(usercontrib['flags'])
+                                continue
+
+                        if ns == 0:
+                            page_title = page_title.lower()
+                            set_article_pages.add(page_title)
+
+                # except :
+                #     import sys
+                #     e = sys.exc_info()[0]
+                #     print("Error: {}".format(e))
+                except KeyError:
+                    if self.catch_error_to_sleep(response):
+                        continue
+                    else:
+                        break
+                except requests.exceptions.ConnectionError:
+                    print("Max retries exceeded with url.")
+                    sleep(5)
+                    continue
+                except:
+                    print("Throwing except: {}".format(response))
+                    continue
+
+                self.dict_member_article_edited[member] = set_article_pages
+
 
 
     def constr_original_page(self, pages):
@@ -761,49 +896,6 @@ class RecommendExperienced():
                 page_set.clear()
         # TODO: check the edits of page contributors, screen out editors who made less than 100 edits
         return contributors
-
-    # # query the active editors to obtain their total edits in Wikipedia
-    # def identify_newcomers_and_experienced_editors(self, contributors):
-    #     print("### Filtering project contributors who made insufficient edits. ###")
-    #
-    #     valid_contributors = set()
-    #     cnt_total_editor, cnt_editor, str_editors = 0, 0, ""
-    #     for editor_text in contributors:
-    #
-    #         # create a list of editors to request at the same time (50 maximum)
-    #         if cnt_editor < 45:
-    #             cnt_editor += 1
-    #             str_editors += editor_text + "|"
-    #         else:
-    #             try:
-    #                 query = self.url_userinfo + "&usprop=editcount|&ususers=" + str_editors
-    #                 response = requests.get(query).json()
-    #                 for editor_info in response['query']['users']:
-    #                     if 'userid' not in editor_info:
-    #                         continue
-    #
-    #                     editor_editcount = editor_info['editcount']
-    #                     if editor_editcount >= self.exp_editor_thr:
-    #                         valid_contributors.add(editor_text)
-    #
-    #             except KeyError:
-    #                 if self.catch_error_to_sleep(response):
-    #                     continue
-    #                 else:
-    #                     break
-    #             except requests.exceptions.ConnectionError:
-    #                 print("Max retries exceeded with url.")
-    #                 sleep(5)
-    #                 continue
-    #             except:
-    #                 print("Throwing except: {}".format(response))
-    #                 continue
-    #
-    #             cnt_editor, str_editors = 0, ""
-    #     print("Number of total project contributors {}: experienced contributors {}.".format(len(self.contributors),
-    #                                                                                          len(self.valid_contributors)))
-    #     return valid_contributors
-
 
     def search_project_pages(self, search_name):
         psoffset = "0"
@@ -893,6 +985,23 @@ class RecommendExperienced():
                                                               self.dict_editor_last_edit_datetime[editor_text],
                                                               self.dict_editor_regstr_time[editor_text],
                                                               self.dict_editor_status[editor_text]), file=fout)
+
+    def write_uucf_recommendations(self):
+        cwd = os.getcwd()
+        fname = cwd + "/data/recommendations/recommendations_uucf.csv"
+        fout = open(fname, "w")
+        # experienced_editor,wikiproject,uucf_score,pos,project_member,common_edits
+        print("wikiproject**editor_text**project_member**uucf_score**common_edits**wp_edits**last_edit**regstr_time**status", file=fout)
+        for wikiproject in self.list_sample_projects:
+            for editor_text in self.dict_topic_based_recommendation[wikiproject]:
+                print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                                  self.dict_uucf_similar_project_member[wikiproject][editor_text],
+                                                                  self.dict_uucf_based_recommendation[wikiproject][editor_text],
+                                                                  self.dict_uucf_common_edits[wikiproject][editor_text],
+                                                                  self.dict_editor_text_editcount[editor_text],
+                                                                  self.dict_editor_last_edit_datetime[editor_text],
+                                                                  self.dict_editor_regstr_time[editor_text],
+                                                                  self.dict_editor_status[editor_text]), file=fout)
 
     def write_newcomer_recommendations(self):
         cwd = os.getcwd()
@@ -1063,6 +1172,10 @@ class RecommendExperienced():
         dict_project_rule_based_recommendation = {}
         dict_project_bonds_based_recommendation = {}
         dict_project_newcomer_edits = {}
+        dict_project_uucf_based_recommendation = {}
+
+        dict_editor_similar_project_member = {}
+        dict_uucf_common_edits = {}
 
         for line in open(filename, "r").readlines()[1:]:
             project = line.split(",")[0].replace("WikiProject_", "").replace("_", " ")
@@ -1071,10 +1184,15 @@ class RecommendExperienced():
             dict_project_bonds_based_recommendation[project] = {}
             dict_project_newcomer_edits[project] = {}
             dict_project_identity_based_recommendation[project] = {}
+            dict_project_uucf_based_recommendation[project] = {}
+
+            dict_editor_similar_project_member[project] = {}
+            dict_uucf_common_edits[project] = {}
 
         return list_projects, dict_project_rule_based_recommendation, \
                dict_project_identity_based_recommendation, dict_project_bonds_based_recommendation, \
-               dict_project_newcomer_edits
+               dict_project_uucf_based_recommendation, dict_project_newcomer_edits, dict_editor_similar_project_member, \
+               dict_uucf_common_edits
 
     def write_valid_project_contributors_to_file(self):
         cwd = os.getcwd()
@@ -1123,7 +1241,6 @@ class RecommendExperienced():
             user_text = line.split('*')[0]
             self.dict_exp_editor_text_id[user_text] = line.split('*')[1]
             if line.split('*')[2] == '':
-                print(user_text)
                 continue
             self.dict_editor_text_editcount[user_text] = int(line.split('*')[2])
             self.dict_editor_regstr_time[user_text] = line.split('*')[3].strip()
@@ -1142,7 +1259,6 @@ class RecommendExperienced():
             user_text = line.split('*')[0]
             self.dict_newcomer_text_id[user_text] = line.split('*')[1]
             if line.split('*')[2] == '':
-                print(user_text)
                 continue
             self.dict_newcomer_editcount[user_text] = int(line.split('*')[2])
             self.dict_editor_regstr_time[user_text] = line.split('*')[3].strip()
@@ -1284,7 +1400,6 @@ class RecommendExperienced():
 
         self.identify_valid_newcomers_and_experienced_editors()
 
-        # recommend editors TODO: add this back
         self.recommend_editors()
 
         # recommend uu cf based editors
