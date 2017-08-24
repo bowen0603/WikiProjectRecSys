@@ -790,17 +790,17 @@ Note about Recommendation Types:
         self.execute()
         # self.execute_WIR()
 
-def main():
-    from sys import argv
-    if len(argv) != 3:
-        print("Usage: <organizer file> <batch number>")
-        return
-
-
-    table_generator = TableGenerator(argv[1], int(argv[2]))
-    table_generator.compute_recommendation_overlaps()
-    table_generator.execute()
-
-main()
+# def main():
+#     from sys import argv
+#     if len(argv) != 3:
+#         print("Usage: <organizer file> <batch number>")
+#         return
+#
+#
+#     table_generator = TableGenerator(argv[1], int(argv[2]))
+#     table_generator.compute_recommendation_overlaps()
+#     table_generator.execute()
+#
+# main()
 
 

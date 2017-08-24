@@ -45,6 +45,7 @@ import random
 from datetime import datetime
 import os.path
 from random import shuffle
+import math
 
 
 class RecommendExperienced():
@@ -559,7 +560,7 @@ class RecommendExperienced():
                 article_shared = set_article_member & set_article_editor
 
                 # insersect(A,B)/(sqrt(len(A))*sqrt(len(B)))
-                uucf_score = 1.0 * len(article_shared) / sqrt(len(set_article_member) * len(set_article_editor))
+                uucf_score = 1.0 * len(article_shared) / (math.sqrt(len(set_article_member)) * math.sqrt(len(set_article_editor)))
                 total_score += uucf_score
                 if uucf_score > max_score:
                     max_score = uucf_score
@@ -763,11 +764,18 @@ class RecommendExperienced():
         print()
 
     def collect_member_article_edits(self):
+
         print("### Collecting member article edits ###")
         for project in self.list_sample_projects:
             if project not in self.dict_project_contributors:
                 continue
+            cnt = 0
             for member in self.dict_project_contributors[project]:
+
+                #TODO: remove
+                cnt += 1
+                if cnt >= 50:
+                    break
 
                 if member == '':
                     continue

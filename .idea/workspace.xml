@@ -12,9 +12,9 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/WikiProjectRecSys$table_generator.coverage" NAME="table_generator Coverage Results" MODIFIED="1503542397044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+    <SUITE FILE_PATH="coverage/WikiProjectRecSys$table_generator.coverage" NAME="table_generator Coverage Results" MODIFIED="1503591048407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
     <SUITE FILE_PATH="coverage/WikiProjectRecSys$page_parser.coverage" NAME="page_parser Coverage Results" MODIFIED="1502469861114" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
-    <SUITE FILE_PATH="coverage/WikiProjectRecSys$experienced_editors.coverage" NAME="experienced_editors Coverage Results" MODIFIED="1503537246098" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+    <SUITE FILE_PATH="coverage/WikiProjectRecSys$experienced_editors.coverage" NAME="experienced_editors Coverage Results" MODIFIED="1503591100438" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
   </component>
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
@@ -38,20 +38,31 @@
       <file leaf-file-name="recommend_editors.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/code/recommend_editors.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="37" />
+            <state relative-caret-position="209">
+              <caret line="118" column="69" lean-forward="false" selection-start-line="118" selection-start-column="24" selection-end-line="118" selection-end-column="69" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
+                <marker date="1503588691000" expanded="true" signature="36784:36829" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="wikitable_generator.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Top25ProjectsPastYear.csv" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data/pre-processing/Top25ProjectsPastYear.csv">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="75">
+              <caret line="5" column="21" lean-forward="true" selection-start-line="5" selection-start-column="21" selection-end-line="5" selection-end-column="21" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="wikitable_generator.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/code/wikitable_generator.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="3" selection-end-column="13" />
+            <state relative-caret-position="345">
+              <caret line="23" column="127" lean-forward="true" selection-start-line="23" selection-start-column="127" selection-end-line="23" selection-end-column="127" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -59,11 +70,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="data_collector.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="data_collector.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/code/data_collector.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="420">
-              <caret line="28" column="12" lean-forward="true" selection-start-line="28" selection-start-column="12" selection-end-line="28" selection-end-column="12" />
+            <state relative-caret-position="300">
+              <caret line="20" column="12" lean-forward="true" selection-start-line="20" selection-start-column="12" selection-end-line="20" selection-end-column="12" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -76,26 +87,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="345">
               <caret line="23" column="51" lean-forward="false" selection-start-line="23" selection-start-column="51" selection-end-line="23" selection-end-column="51" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="valid_experienced_editors.csv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/pre-processing/valid_experienced_editors.csv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="59460">
-              <caret line="3964" column="5" lean-forward="false" selection-start-line="3964" selection-start-column="3" selection-end-line="3964" selection-end-column="5" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="bot_list.csv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/bot_list.csv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2055">
-              <caret line="137" column="18" lean-forward="true" selection-start-line="137" selection-start-column="18" selection-end-line="137" selection-end-column="18" />
               <folding />
             </state>
           </provider>
@@ -122,9 +113,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>read_file_rule</find>
-      <find>identify_control_group_editors</find>
-      <find>fetch</find>
       <find>dict_member_article_edited</find>
       <find>read_sample_projects</find>
       <find>write_topic_recommendations</find>
@@ -152,6 +140,9 @@
       <find>Sarastro1</find>
       <find>nbr_editors = min(self.nbr_per_alg, len(self.dict_project_uucf[</find>
       <find>message</find>
+      <find>dict_project_newcomer_edits</find>
+      <find>asia</find>
+      <find>data/pre-processing/valid_experienced_editors</find>
     </findStrings>
     <replaceStrings>
       <replace>/data/</replace>
@@ -177,10 +168,11 @@
         <option value="$PROJECT_DIR$/data/pre-processing/project_experienced_contributors.csv" />
         <option value="$PROJECT_DIR$/data/recommendations/recommendations_newcomers.csv" />
         <option value="$PROJECT_DIR$/data/project_organizers.csv" />
-        <option value="$PROJECT_DIR$/code/recommend_editors.py" />
         <option value="$PROJECT_DIR$/data/collection/group_treatment.csv" />
-        <option value="$PROJECT_DIR$/code/wikitable_generator.py" />
         <option value="$PROJECT_DIR$/code/data_collector.py" />
+        <option value="$PROJECT_DIR$/code/recommend_editors.py" />
+        <option value="$PROJECT_DIR$/data/pre-processing/Top25ProjectsPastYear.csv" />
+        <option value="$PROJECT_DIR$/code/wikitable_generator.py" />
       </list>
     </option>
   </component>
@@ -191,8 +183,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1082" />
-    <option name="y" value="77" />
+    <option name="x" value="775" />
+    <option name="y" value="49" />
     <option name="width" value="2079" />
     <option name="height" value="1287" />
   </component>
@@ -336,6 +328,10 @@
     <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/bowen/Documents/WikiProjectRecSys/data/recommendations/Military history_user1.csv" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/code" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/data/pre-processing" />
       <recent name="$PROJECT_DIR$/data/recommendations" />
@@ -343,12 +339,8 @@
       <recent name="$PROJECT_DIR$/code" />
       <recent name="$PROJECT_DIR$/code/utils" />
     </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/code" />
-      <recent name="$PROJECT_DIR$" />
-    </key>
   </component>
-  <component name="RunManager" selected="Python.table_generator">
+  <component name="RunManager" selected="Python.experienced_editors">
     <configuration default="true" type="DjangoTestsConfigurationType" factoryName="Django tests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -813,20 +805,20 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1082" y="77" width="2079" height="1287" extended-state="0" />
+    <frame x="775" y="49" width="2079" height="1287" extended-state="0" />
     <editor active="false" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16936672" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.49372384" sideWeight="0.5017182" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32970712" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.22594142" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24907847" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.49372384" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.49372384" sideWeight="0.49828178" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.42928872" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.42928872" sideWeight="0.49828178" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -871,48 +863,43 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>388</line>
+          <line>389</line>
           <option name="timeStamp" value="164" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>264</line>
+          <line>265</line>
           <option name="timeStamp" value="170" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>382</line>
+          <line>383</line>
           <option name="timeStamp" value="172" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>194</line>
+          <line>195</line>
           <option name="timeStamp" value="181" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>1368</line>
+          <line>1376</line>
           <option name="timeStamp" value="233" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>926</line>
+          <line>934</line>
           <option name="timeStamp" value="234" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>345</line>
+          <line>346</line>
           <option name="timeStamp" value="255" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>570</line>
+          <line>571</line>
           <option name="timeStamp" value="275" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/code/recommend_editors.py</url>
-          <line>538</line>
-          <option name="timeStamp" value="277" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -972,18 +959,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data/pre-processing/articles_top25_projects.csv">
-      <provider selected="true" editor-type-id="LargeFileEditor">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/pre-processing/Top25ProjectsPastYear.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" column="39" lean-forward="true" selection-start-line="8" selection-start-column="39" selection-end-line="8" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data/valid_experienced_editors.csv" />
     <entry file="file://$PROJECT_DIR$/data/recommendations/recommendations_rule.csv">
       <provider selected="true" editor-type-id="text-editor">
@@ -1036,13 +1011,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="639">
           <caret line="323" column="0" lean-forward="false" selection-start-line="323" selection-start-column="0" selection-end-line="323" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/pre-processing/projects_categories.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
         </state>
       </provider>
     </entry>
@@ -1138,16 +1106,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/code/recommend_editors.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data/recommendations/recommendations_uucf.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
@@ -1180,16 +1138,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/code/wikitable_generator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="3" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data/collection/group_control.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="279">
@@ -1200,8 +1148,56 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/code/data_collector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="28" column="12" lean-forward="true" selection-start-line="28" selection-start-column="12" selection-end-line="28" selection-end-column="12" />
+        <state relative-caret-position="300">
+          <caret line="20" column="12" lean-forward="true" selection-start-line="20" selection-start-column="12" selection-end-line="20" selection-end-column="12" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/pre-processing/projects_categories.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="25" column="0" lean-forward="true" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/pre-processing/Top25ProjectsPastYear.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="21" lean-forward="true" selection-start-line="5" selection-start-column="21" selection-end-line="5" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/pre-processing/articles_top25_projects.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="3167" column="32" lean-forward="true" selection-start-line="3167" selection-start-column="32" selection-end-line="3167" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+      <provider editor-type-id="LargeFileEditor">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/code/recommend_editors.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="118" column="69" lean-forward="false" selection-start-line="118" selection-start-column="24" selection-end-line="118" selection-end-column="69" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+            <marker date="1503588691000" expanded="true" signature="36784:36829" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/code/wikitable_generator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="23" column="127" lean-forward="true" selection-start-line="23" selection-start-column="127" selection-end-line="23" selection-end-column="127" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
