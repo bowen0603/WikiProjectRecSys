@@ -1023,7 +1023,7 @@ class RecommendExperienced():
         # experienced_editor,wikiproject,uucf_score,pos,project_member,common_edits
         print("wikiproject**editor_text**project_member**uucf_score**common_edits**wp_edits**last_edit**regstr_time**status", file=fout)
         for wikiproject in self.list_sample_projects:
-            for editor_text in self.dict_topic_based_recommendation[wikiproject]:
+            for editor_text in self.dict_uucf_based_recommendation[wikiproject]:
                 print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                                   self.dict_uucf_similar_project_member[wikiproject][editor_text],
                                                                   self.dict_uucf_based_recommendation[wikiproject][editor_text],

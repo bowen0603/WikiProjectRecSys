@@ -19,9 +19,9 @@ class TableGenerator:
         self.message_greeting = """
 Hi {},
 
-Here is a list of candidate editors our system generated for your project. They will be interested in working in your project and collaborating with your project members. As you notice, the list contains both newcomers and experienced editors. They are both valuable for Wikipedia and your project. Please go ahead and introduce the project to them, and point them to some project tasks to start with. We also provide a semi template to make it easier for you. Please click the invite to write the message.
+Our system generated a list of potential new editors for your project. They may be interested in collaborating with your project members to on your project's articles. As you will notice, the list contains both experienced editors and newcomers. Both are valuable for Wikipedia and your project. Please go ahead and introduce your project to them, and point them to some project tasks to start with. We also provide a template invitation message to make it easier to contact the potential new editors. Just click the invite link to write the invitation message.
 
-As a part of our study, we'd appreciate it if you could fill the survey to let us know how you think about our recommendations.
+We'd appreciate it if you could fill the survey to let us know what you think about our recommendations so we can improve our system.
         """
 
         self.message_ending = """
@@ -631,6 +631,10 @@ Note about Recommendation Types:
                       "It's a strong indication that she/he will like your project. Please welcome our Wikipedia newbies!".format(editor_text,
                                                                                                                               self.article_link(editor_info['first_article']))
 
+        description = "{} just joined Wikipedia and made their first edit on an article within the scope of your project, " \
+                      "{}. This is an indication that they might be interested in working on your project. " \
+                      "Please welcome Wikipedia newbies!".format(editor_text, self.article_link(editor_info['first_article']))
+
         str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
                                                                                           date_regstr_str,
                                                                                           editor_info['wp_edits'],
@@ -646,6 +650,9 @@ Note about Recommendation Types:
         description = "{} made {} edits on articles within the scope of your project out of her/his most recent 500 edits. " \
                       "Let her/him know your project. She/He will contribute more!".format(editor_text,
                                                                                      editor_info['project_edits'])
+
+        description = "{} made {} our of their most recent 500 edits to articles within the scope of your project. " \
+                      "If you invite them to your project, they will have the opportunity to contribute more!".format(editor_text, editor_info['project_edits'])
 
         str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
                                                                                           date_regstr_str,
@@ -684,6 +691,14 @@ Note about Recommendation Types:
                                                                                                 self.category_link(editor_info['cate_second']),
                                                                                                 self.category_link(self.project_first_category[project]),
                                                                                                 self.category_link(self.project_second_category[project]))
+            description = "{}'s editing history suggests a strong match with your project. Most articles they have edited fall under the Category {} and {}, " \
+                          "and most of your project's articles also fall under these categories. " \
+                          "Studies have found that editors with a stronger topic match with a project tend to edit more and stay longer in the project! ".format(
+                editor_text,
+                self.category_link(editor_info['cate_first']),
+                self.category_link(editor_info['cate_second']),
+                self.category_link(self.project_first_category[project]),
+                self.category_link(self.project_second_category[project]))
 
         else:
             description = "{} has a strong topic match with your project. She/He edited articles mostly fall into Category {}. " \
@@ -692,6 +707,16 @@ Note about Recommendation Types:
                                                                                                                self.category_link(editor_info['cate_first']),
                                                                                                                self.category_link(self.project_first_category[project]),
                                                                                                                self.category_link(self.project_second_category[project]))
+
+            description = "{}'s editing history suggests a strong match with your project. Most articles they have edited fall under the Category {}, " \
+                          "and most of your project's articles also fall under this category. " \
+                          "Studies have found that editors with a stronger topic match with a project tend to edit more and stay longer in the project! ".format(
+                editor_text,
+                self.category_link(editor_info['cate_first']),
+                self.category_link(self.project_first_category[project]),
+                self.category_link(self.project_second_category[project]))
+
+
 
         str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
                                                                                           date_regstr_str,
@@ -712,6 +737,18 @@ Note about Recommendation Types:
                                                                                                                                                         editor_text,
                                                                                                                                                         editor_info['neighbor1'],
                                                                                                                                                         editor_info['common_edits'])
+
+        description = "{} edited articles similar to articles your project members edited. " \
+                      "For example, {} and project member {} edited {} of the same articles in their most recent 500 edits. " \
+                      "This suggests that {} will be interested in editing your project's articles!".format(editor_text,
+                                                                                                            editor_text,
+                                                                                                            editor_info['neighbor1'],
+                                                                                                            editor_info['common_edits'])
+        description = "{} edited articles similar to articles your project members edited. " \
+                      "For example, {} and project member ".format(editor_text, editor_text) + "{{User | {}}}".format(editor_info['neighbor1'])
+        description += " edited {} of the same articles in their most recent 500 edits. " \
+                      "This suggests that {} will be interested in editing your project's articles!".format(editor_info['common_edits'], editor_text)
+
         str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
                                                                                           date_regstr_str,
                                                                                           editor_info['wp_edits'],
