@@ -60,7 +60,7 @@ class RecommendExperienced():
 
         self.const_recommendation_nbr = 40  # 20
         self.const_max_requests = 500  # 500
-        self.constr_newcomer_days = 7
+        self.constr_newcomer_days = 5
         self.debug = False
         self.debug_nbr = 100
 
@@ -307,6 +307,9 @@ class RecommendExperienced():
 
             if editor_cnt % 1000 == 0:
                 print("## Retrieving and analyzing {}k editors.. ".format(editor_cnt / 1000))
+
+                if self.debug:
+                    break
 
             # print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
             editor_cnt += 1
@@ -555,14 +558,21 @@ class RecommendExperienced():
                 if member in self.list_bots:
                     continue
 
+                # TODO; update this (debug purpose only)
+                if member not in self.dict_member_article_edited:
+                    continue
                 set_article_member = self.dict_member_article_edited[member]
                 set_article_editor = set(edits_ns0_articles.keys())
                 article_shared = set_article_member & set_article_editor
 
                 # insersect(A,B)/(sqrt(len(A))*sqrt(len(B)))
-                uucf_score = 1.0 * len(article_shared) / (math.sqrt(len(set_article_member)) * math.sqrt(len(set_article_editor)))
+                try:
+                    uucf_score = 1.0 * len(article_shared) / (math.sqrt(len(set_article_member)) * math.sqrt(len(set_article_editor)))
+                except:
+                    uucf_score = 0.0
+
                 total_score += uucf_score
-                if uucf_score > max_score:
+                if uucf_score > max_score and uucf_score > 0:
                     max_score = uucf_score
                     self.dict_uucf_similar_project_member[project][editor_text] = member
                     self.dict_uucf_common_edits[project][editor_text] = len(article_shared)
@@ -570,7 +580,7 @@ class RecommendExperienced():
 
             # insert the new editor
             dict_recommended_editors = self.dict_uucf_based_recommendation[project]
-            dict_recommended_editors[user_text] = total_score
+            dict_recommended_editors[editor_text] = total_score
 
             if len(dict_recommended_editors) > self.const_recommendation_nbr:
                 editor_min = min(dict_recommended_editors, key=dict_recommended_editors.get)
@@ -718,6 +728,9 @@ class RecommendExperienced():
                 experienced_contributors = set()
                 if project in self.dict_project_sub_pages:
 
+                    # if not (project == "Women scientists" or project == "Women's Health" or project == "Women artists"):
+                    #     continue
+
                     shuffle(self.dict_project_sub_pages[project])
                     page_contributors = self.search_page_contributors(self.dict_project_sub_pages[project])
                     experienced_contributors = experienced_contributors.union(self.identify_experienced_editors(page_contributors))
@@ -733,6 +746,7 @@ class RecommendExperienced():
                 self.dict_project_contributors[project] = experienced_contributors
                 print("Collecting contributors for WikiProject:{}. {} contributors.".format(project,
                                                                                             len(experienced_contributors)))
+                # TODO: check WikiProject:Women's Health
                 # # write into files
                 # for contributor in experienced_contributors:
                 #     print("{}*{}".format(project, contributor), file=fout)
@@ -772,10 +786,10 @@ class RecommendExperienced():
             cnt = 0
             for member in self.dict_project_contributors[project]:
 
-                #TODO: remove
-                cnt += 1
-                if cnt >= 50:
-                    break
+                if self.debug:
+                    cnt += 1
+                    if cnt >= 50:
+                        break
 
                 if member == '':
                     continue
@@ -855,16 +869,22 @@ class RecommendExperienced():
         page_set = set()
 
         # create a list of pages to request at the same time (50 maximum)
-        for page_title in set(page_titles):
-            if cnt_page < 40:
-                cnt_page += 1
+        for i in range(len(page_titles)):
+        # for page_title in set(page_titles):
+            page_title = page_titles[i]
+            if cnt_page < 40 and i != len(page_titles)-1:
                 if page_title not in page_set:
+                    # cannot have & in the title
+                    if '&' in page_title:
+                        continue
                     str_pages += page_title + "|"
                     page_set.add(page_title)
+                    cnt_page += 1
             else:
                 first_request, continue_querying = True, True
                 while continue_querying:
                     try:
+                        str_pages += page_title + "|"
                         if first_request:
                             query = self.constr_original_page(str_pages)
                             first_request = False
@@ -902,7 +922,9 @@ class RecommendExperienced():
 
                 cnt_page, str_pages = 0, ""
                 page_set.clear()
-        # TODO: check the edits of page contributors, screen out editors who made less than 100 edits
+
+                if self.debug:
+                    break
         return contributors
 
     def search_project_pages(self, search_name):
@@ -1425,10 +1447,10 @@ def main():
     rec_exp = RecommendExperienced(argv)
 
     rec_exp.execute()
-    rec_exp.recommend_editors_WIR()
+    # rec_exp.recommend_editors_WIR()
 
-    table_generator = TableGenerator(rec_exp.dict_editor_text_editcount, rec_exp.dict_editor_regstr_time, rec_exp.dict_editor_status)
-    table_generator.create_tables()
+    # table_generator = TableGenerator(rec_exp.dict_editor_text_editcount, rec_exp.dict_editor_regstr_time, rec_exp.dict_editor_status)
+    # table_generator.create_tables()
 
 
 
