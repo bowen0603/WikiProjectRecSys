@@ -325,29 +325,31 @@ Note about Recommendation Types:
         # wikiproject**editor_text**cate_first**cate_second**wp_edits**last_edit**regstr_time**status
         filename = "data/recommendations/recommendations_uucf.csv"
         for line in open(filename, "r").readlines()[1:]:
-            user_text = line.split(',')[0]
+
+            project = line.split('**')[0]
+
+            user_text = line.split('**')[1]
             if user_text in self.list_bots:
                 continue
-            project = line.split(',')[1]
 
             # skip editors who have been shown on the list
             if user_text in self.set_recommended_editors:
                 continue
 
             # skip in case the neighbor is a bot
-            neighbor = line.split(',')[4]
+            neighbor = line.split('**')[2]
             if neighbor in self.list_bots:
                 continue
 
             try:
-                dict_user_info = {'uucf_score': float(line.split(',')[2]),
-                                  'rank': int(line.split(',')[3]),
+                dict_user_info = {'uucf_score': float(line.split('**')[3]),
+                                  'rank': int(line.split('**')[4]),
                                   'neighbor1': neighbor,
-                                  'common_edits': int(line.split(',')[5].strip()),
-                                  'wp_edits': self.dict_editor_wp_edits[user_text],
-                                  'regstr_time': self.dict_editor_date_regstr_str[user_text],
-                                  # 'status': self.dict_editor_status[user_text]}
-                                  'status': 'Active'}
+                                  'common_edits': int(line.split('**')[4]),
+                                  'wp_edits': int(line.split('**')[5]),
+                                  'last_edit': line.split(self.delimiter)[6],
+                                  'regstr_time': line.split(self.delimiter)[7],
+                                  'status': line.split(self.delimiter)[8].strip()}
             except KeyError:
                 #TODO: change here later
                 # print(user_text)
@@ -428,7 +430,10 @@ Note about Recommendation Types:
                 list_editor_wikicodes = []
 
                 # randomly select editors from each algorithms, and delete the editors/ randomlize the order of the editors
-                nbr_editors = min(self.nbr_newcomers, len(self.dict_project_newcomers[project].keys()))
+                try:
+                    nbr_editors = min(self.nbr_newcomers, len(self.dict_project_newcomers[project].keys()))
+                except KeyError:
+                    nbr_editors = 0
 
                 # print newcomers
                 i = 0
@@ -542,7 +547,7 @@ Note about Recommendation Types:
                     del project_members[editor_text]
                     recommended_editors.add(editor_text)
 
-                fout = open(self.output_dir + project + "_" + organizer + "_"+ str(self.batch_nbr) + ".csv", "w")
+                fout = open(self.output_dir + project.replace(" ", "_") + "_" + organizer.replace(" ", "_") + "_"+ str(self.batch_nbr) + ".csv", "w")
                 message_greeting = self.message_greeting.format(organizer)
                 print(message_greeting, file=fout)
 
@@ -569,8 +574,10 @@ Note about Recommendation Types:
             if project not in self.dict_project_topics:
                 continue
 
-            for editor in self.dict_project_newcomers[project]:
-                self.set_editors_control_group.add((project, editor, "new"))
+            if project in self.dict_project_newcomers:
+                for editor in self.dict_project_newcomers[project]:
+                    self.set_editors_control_group.add((project, editor, "new"))
+
             for editor in self.dict_project_topics[project]:
                 self.set_editors_control_group.add((project, editor, "topic"))
             for editor in self.dict_project_rules[project]:
@@ -671,6 +678,11 @@ Note about Recommendation Types:
                                                                                                                      editor_info['pjtk_cnt'],
                                                                                                                      editor_info['talker_cnt'])
 
+        description = "{}'s editing history shows connections with your project members! " \
+                      "They have posted multiple messages on the user talk pages of a number of your project members. " \
+                      "Studies have found that editors with these kinds of connections to project members " \
+                      "tend to edit more and stay longer in the project!".format(editor_text)
+
         str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
                                                                                           date_regstr_str,
                                                                                           editor_info['wp_edits'],
@@ -732,29 +744,29 @@ Note about Recommendation Types:
         date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
         neighbor1 = "{{User | {}}}".format(editor_info['neighbor1'])
         # neighbor2 = "{{User | {}}}".format(editor_info['neighbor2'])
-        description = "{} edited articles similar to the articles your project members edited. " \
-                      "For instance, {} and project member {} edited {} articles in common. She/He will be interested in your project articles!".format(editor_text,
-                                                                                                                                                        editor_text,
-                                                                                                                                                        editor_info['neighbor1'],
-                                                                                                                                                        editor_info['common_edits'])
+        # description = "{} edited articles similar to the articles your project members edited. " \
+        #               "For instance, {} and project member {} edited {} articles in common. She/He will be interested in your project articles!".format(editor_text,
+        #                                                                                                                                                 editor_text,
+        #                                                                                                                                                 editor_info['neighbor1'],
+        #                                                                                                                                                 editor_info['common_edits'])
 
-        description = "{} edited articles similar to articles your project members edited. " \
-                      "For example, {} and project member {} edited {} of the same articles in their most recent 500 edits. " \
-                      "This suggests that {} will be interested in editing your project's articles!".format(editor_text,
-                                                                                                            editor_text,
-                                                                                                            editor_info['neighbor1'],
-                                                                                                            editor_info['common_edits'])
-        description = "{} edited articles similar to articles your project members edited. " \
-                      "For example, {} and project member ".format(editor_text, editor_text) + "{{User | {}}}".format(editor_info['neighbor1'])
-        description += " edited {} of the same articles in their most recent 500 edits. " \
+        # description = "{} edited articles similar to articles your project members edited. " \
+        #               "For example, {} and project member {} edited {} of the same articles in their most recent 500 edits. " \
+        #               "This suggests that {} will be interested in editing your project's articles!".format(editor_text,
+        #                                                                                                     editor_text,
+        #                                                                                                     editor_info['neighbor1'],
+        #                                                                                                     editor_info['common_edits'], editor_text)
+        description1 = "{} edited articles similar to articles your project members edited. " \
+                      "For example, {} and project member ".format(editor_text, editor_text) + "{" + neighbor1 + "}"#"{{User | {}}}".format(editor_info['neighbor1'])
+        description2 = " edited {} of the same articles in their most recent 500 edits. " \
                       "This suggests that {} will be interested in editing your project's articles!".format(editor_info['common_edits'], editor_text)
+        description = description1 + description2
 
-        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
-                                                                                          date_regstr_str,
-                                                                                          editor_info['wp_edits'],
-                                                                                          self.form_editor_status(editor_info['status']),
-                                                                                          self.form_template_link(project, editor_text),
-                                                                                          self.form_survey_link(project, organizer, editor_text))
+        str = "|-\n | {" + user_page + "}" + "|| " + description + " || {} || {} || {} || {} || {}".format(date_regstr_str,
+                                                                                                          editor_info['wp_edits'],
+                                                                                                          self.form_editor_status(editor_info['status']),
+                                                                                                          self.form_template_link(project, editor_text),
+                                                                                                          self.form_survey_link(project, organizer, editor_text))
         return str
 
     def create_message_WIR(self, organizer, editor_text, editor_info):
@@ -827,17 +839,17 @@ Note about Recommendation Types:
         self.execute()
         # self.execute_WIR()
 
-# def main():
-#     from sys import argv
-#     if len(argv) != 3:
-#         print("Usage: <organizer file> <batch number>")
-#         return
-#
-#
-#     table_generator = TableGenerator(argv[1], int(argv[2]))
-#     table_generator.compute_recommendation_overlaps()
-#     table_generator.execute()
-#
-# main()
+def main():
+    from sys import argv
+    if len(argv) != 3:
+        print("Usage: <organizer file> <batch number>")
+        return
+
+
+    table_generator = TableGenerator(argv[1], int(argv[2]))
+    table_generator.compute_recommendation_overlaps()
+    table_generator.execute()
+
+main()
 
 
