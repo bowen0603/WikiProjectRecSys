@@ -249,7 +249,93 @@ class PageParser:
     def extract_projects_from_userboxes(self, userboxes):
         return None
 
-    def WIR_report_parser(self):
+    def WIR_member_parse_template(self, page):
+        set_members = set()
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                page_text = pages[page]['revisions'][0]['*']
+                wikicode = mwp.parse(page_text)
+                for template in wikicode.filter_templates():
+                    if template.startswith("{{#target:User talk:"):
+                        user_text = template.replace("{{#target:User talk:", "").replace("}}", "")
+                        set_members.add(user_text)
+
+        except Exception:
+            print("Error when parsing WIR pages")
+
+        print(len(set_members))
+        return set_members
+
+    def WIR_member_parse_externallinks(self, page):
+        set_members = set()
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                page_text = pages[page]['revisions'][0]['*']
+                wikicode = mwp.parse(page_text)
+
+                for link in wikicode.filter_external_links():
+                    idx = link.find(":", 6)
+                    raw_text = link[idx:]
+                    header = raw_text.split(" ")[0]
+                    user_text = raw_text.replace(header + " ", "")
+                    set_members.add(user_text)
+
+        except Exception:
+            print("Error when parsing WIR pages")
+
+        print(len(set_members))
+        return set_members
+
+    def WIR_member_parse_wikilinks(self, page):
+        set_members = set()
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                page_text = pages[page]['revisions'][0]['*']
+                wikicode = mwp.parse(page_text)
+                for link in wikicode.filter_wikilinks():
+                    if link.startswith("[[User:"):
+                        user_text = link.replace("[[User:", "").replace("]]", "")
+                        set_members.add(user_text)
+
+        except Exception:
+            print("Error when parsing WIR pages")
+
+        print(len(set_members))
+        return set_members
+
+    def WIR_member_parse_text(self, page):
+        set_members = set()
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                page_text = pages[page]['revisions'][0]['*']
+                wikicode = mwp.parse(page_text)
+                for text in wikicode.filter_text():
+                    import re
+                    # {{User: XXX /
+                    match = re.match(r'.*{{User:(.*)/WikiProjectCards/.*', text, re.M | re.I)
+                    user_text = match.group(1)
+                    user_text = text.replace("[[User:", "").replace("]]", "")
+                    set_members.add(user_text)
+
+        except Exception:
+            print("Error when parsing WIR pages")
+
+        print(len(set_members))
+        return set_members
+
+    def WIR_report_to_candidates(self):
         # TODO: make the month flexible
         page = "Wikipedia:WikiProject Women in Red/Metrics/August 2017"
         list_articles = []
@@ -275,7 +361,7 @@ class PageParser:
     def identify_WIR_article_creators(self):
         dict_editor_creators = {}
         dict_editor_article = {}
-        for article in self.WIR_report_parser():
+        for article in self.WIR_report_to_candidates():
 
             query = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp|user&rvdir=newer&format=json&titles="+ article
             # query = self.url_page + page
