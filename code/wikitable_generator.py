@@ -42,7 +42,8 @@ Note about Recommendation Types:
         self.table_schema_general = '! Username  !! Why we recommend this editor !! First Edit Date !! Total Edits in ENWP !! Recent Activity Level !! Invite !! Survey \n'
         self.table_header_general = '{| class="wikitable sortable"\n |-\n' + self.table_schema_general  # begining of the table
 
-        self.table_schema_WIR = '! Username !! Editor Description !! First Edit Date !! Total Edits in WP !! Recent Activity Level !! Survey \n'
+        invite = "{{H:title|Please sign your signature when inviting the editor. |Invitation Status}}"
+        self.table_schema_WIR = '! Username !! Articles Created !! First Edit Date !! Total Edits in ENWP !! Recent Activity Level !! {} \n'.format(invite)
         self.table_header_WIR = '{| class="wikitable sortable"\n |-\n' + self.table_schema_WIR  # begining of the table
 
         self.delimiter = '**'  # what the csv is seperated by
@@ -65,7 +66,7 @@ Note about Recommendation Types:
         self.invitation_link_exp = "[https://en.wikipedia.org/w/index.php?title=User_talk:{}&action=edit&section=new&preload=User:Bobo.03/InviteExpEditors&editintro=User:Bobo.03/Study_Intro invite] "
         self.invitation_link_newcomers = "[https://en.wikipedia.org/w/index.php?title=User_talk:{}&action=edit&section=new&preload=User:Bobo.03/InviteNewcomers&editintro=User:Bobo.03/Study_Intro invite] "
 
-        self.dict_editor_wp_edits, self.dict_editor_date_regstr_str, self.dict_editor_status = self.read_editor_info()
+        # self.dict_editor_wp_edits, self.dict_editor_date_regstr_str, self.dict_editor_status = self.read_editor_info()
         self.list_bots = self.read_bot_list()
         self.read_recommended_editors()
 
@@ -77,7 +78,8 @@ Note about Recommendation Types:
         self.dict_project_topics = self.read_file_topics()
         self.dict_project_uucf = self.read_file_uucf()
 
-        self.dict_project_organizers = self.read_file_organizers()
+        # self.dict_project_organizers = self.read_file_organizers()
+
 
     def compute_recommendation_overlaps(self):
         set_editors_rule = set()
@@ -629,6 +631,42 @@ Note about Recommendation Types:
             print("|}", file=fout)
             print(self.message_ending, file=fout)
 
+    def create_message_WIR_group(self, editor_text, editor_info, editor_articles, month):
+        user_page = "{{noping2 | {}}}".format(editor_text)
+        date_regstr = datetime.strptime(editor_info['regstr_ts'], "%Y-%m-%dT%H:%M:%SZ")
+        date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
+
+        str_article_list = ""
+        for article in editor_articles:
+            str_article_list += self.article_link(article) + ", "
+
+        description = "{} created {} WIR articles in {}: {}.".format(editor_text,
+                                                                     editor_info['page_created'],
+                                                                     month,
+                                                                     str_article_list)
+        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} ||".format(description,
+                                                                              date_regstr_str,
+                                                                              editor_info['editcount'],
+                                                                              self.form_editor_status(editor_info['status']))
+        return str
+
+    def execute_WIR_group(self, list_editors_sorted, dict_editor_info, dict_editor_articles, month):
+
+        list_editor_wikicodes = []
+        for editor in list_editors_sorted:
+            if editor not in dict_editor_info:
+                continue
+                
+            str_editor_description = self.create_message_WIR_group(editor, dict_editor_info[editor], dict_editor_articles[editor], month)
+            list_editor_wikicodes.append(str_editor_description)
+
+        fout = open(self.output_dir + "WIR_group_" + month + ".csv", "w")
+        print(self.table_header_WIR, file=fout)
+        for editor_code in list_editor_wikicodes:
+            print("{}".format(editor_code), file=fout)
+        print("|}", file=fout)
+
+
 
     def create_newcomer_message(self, project, organizer, editor_text, editor_info):
         user_page = "{{User | {}}}".format(editor_text)
@@ -745,17 +783,19 @@ Note about Recommendation Types:
         neighbor1 = "{{User | {}}}".format(editor_info['neighbor1'])
         # neighbor2 = "{{User | {}}}".format(editor_info['neighbor2'])
         # description = "{} edited articles similar to the articles your project members edited. " \
-        #               "For instance, {} and project member {} edited {} articles in common. She/He will be interested in your project articles!".format(editor_text,
-        #                                                                                                                                                 editor_text,
-        #                                                                                                                                                 editor_info['neighbor1'],
-        #                                                                                                                                                 editor_info['common_edits'])
+        #               "For instance, {} and project member {} edited {} articles in common.
+        # She/He will be interested in your project articles!".format(editor_text,
+        #                                                              editor_text,
+        #                                                              editor_info['neighbor1'],
+        #                                                              editor_info['common_edits'])
 
         # description = "{} edited articles similar to articles your project members edited. " \
         #               "For example, {} and project member {} edited {} of the same articles in their most recent 500 edits. " \
-        #               "This suggests that {} will be interested in editing your project's articles!".format(editor_text,
-        #                                                                                                     editor_text,
-        #                                                                                                     editor_info['neighbor1'],
-        #                                                                                                     editor_info['common_edits'], editor_text)
+        #               "This suggests that {} will be interested in " \
+        #               "editing your project's articles!".format(editor_text,
+        #                                                         editor_text,
+        #                                                         editor_info['neighbor1'],
+        #                                                         editor_info['common_edits'], editor_text)
         description1 = "{} edited articles similar to articles your project members edited. " \
                       "For example, {} and project member ".format(editor_text, editor_text) + "{" + neighbor1 + "}"#"{{User | {}}}".format(editor_info['neighbor1'])
         description2 = " edited {} of the same articles in their most recent 500 edits. " \
@@ -838,18 +878,18 @@ Note about Recommendation Types:
 
         self.execute()
         # self.execute_WIR()
-
-def main():
-    from sys import argv
-    if len(argv) != 3:
-        print("Usage: <organizer file> <batch number>")
-        return
-
-
-    table_generator = TableGenerator(argv[1], int(argv[2]))
-    table_generator.compute_recommendation_overlaps()
-    table_generator.execute()
-
-main()
+#
+# def main():
+#     from sys import argv
+#     if len(argv) != 3:
+#         print("Usage: <organizer file> <batch number>")
+#         return
+#
+#
+#     table_generator = TableGenerator(argv[1], int(argv[2]))
+#     table_generator.compute_recommendation_overlaps()
+#     table_generator.execute()
+#
+# main()
 
 

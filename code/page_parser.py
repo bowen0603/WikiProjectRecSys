@@ -1,7 +1,10 @@
-__author__ = 'bobo'
+from __future__ import print_function
 import mwparserfromhell as mwp
 import requests
+import re
 from time import sleep
+
+__author__ = 'bobo'
 
 class PageParser:
 
@@ -94,6 +97,11 @@ class PageParser:
                             is_valid = False
                         if content.contains('Template:') and content.contains('vandal'):
                             is_valid = False
+
+                        # TODO: add these conditions
+                        #TODO: check [[Wikipedia:Edit warring|edit war]]
+                        #TODO: [[Wikipedia:Blocking policy|blocked]]
+                        #TODO: parse the page and skip: https://en.wikipedia.org/wiki/Wikipedia:List_of_administrators admin {{Administrator topicon}}
 
                 editor_validation[username] = is_valid
 
@@ -266,7 +274,7 @@ class PageParser:
         except Exception:
             print("Error when parsing WIR pages")
 
-        print(len(set_members))
+        print("Identified {} members from the page: {}.".format(len(set_members), page))
         return set_members
 
     def WIR_member_parse_externallinks(self, page):
@@ -283,13 +291,13 @@ class PageParser:
                     idx = link.find(":", 6)
                     raw_text = link[idx:]
                     header = raw_text.split(" ")[0]
-                    user_text = raw_text.replace(header + " ", "")
+                    user_text = raw_text.replace(header + " ", "").replace("]", "")
                     set_members.add(user_text)
 
         except Exception:
             print("Error when parsing WIR pages")
 
-        print(len(set_members))
+        print("Identified {} members from the page: {}.".format(len(set_members), page))
         return set_members
 
     def WIR_member_parse_wikilinks(self, page):
@@ -309,7 +317,7 @@ class PageParser:
         except Exception:
             print("Error when parsing WIR pages")
 
-        print(len(set_members))
+        print("Identified {} members from the page: {}.".format(len(set_members), page))
         return set_members
 
     def WIR_member_parse_text(self, page):
@@ -322,22 +330,24 @@ class PageParser:
                 page_text = pages[page]['revisions'][0]['*']
                 wikicode = mwp.parse(page_text)
                 for text in wikicode.filter_text():
-                    import re
-                    # {{User: XXX /
-                    match = re.match(r'.*{{User:(.*)/WikiProjectCards/.*', text, re.M | re.I)
-                    user_text = match.group(1)
-                    user_text = text.replace("[[User:", "").replace("]]", "")
-                    set_members.add(user_text)
+                    text = text.strip()
+                    try:
+                        match = re.match(r".*{{User:(.*)/WikiProjectCards/.*", text, re.M | re.I)
+                        user_text = match.group(1)
+                        user_text = user_text.replace("[[User:", "").replace("]]", "")
+                        set_members.add(user_text)
+                    except Exception:
+                        continue
 
         except Exception:
             print("Error when parsing WIR pages")
 
-        print(len(set_members))
+        print("Identified {} members from the page: {}.".format(len(set_members), page))
         return set_members
 
-    def WIR_report_to_candidates(self):
+    def WIR_report_to_candidates(self, month, year):
         # TODO: make the month flexible
-        page = "Wikipedia:WikiProject Women in Red/Metrics/August 2017"
+        page = "Wikipedia:WikiProject Women in Red/Metrics/{} {}".format(month, year)
         list_articles = []
         try:
             query = self.url_page + page
@@ -358,49 +368,49 @@ class PageParser:
         return list_articles
 
 
-    def identify_WIR_article_creators(self):
-        dict_editor_creators = {}
-        dict_editor_article = {}
-        for article in self.WIR_report_to_candidates():
+    # def identify_WIR_article_creators(self):
+    #     dict_editor_creators = {}
+    #     dict_editor_article = {}
+    #     for article in self.WIR_report_to_candidates():
+    #
+    #         query = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp|user&rvdir=newer&format=json&titles="+ article
+    #         # query = self.url_page + page
+    #         try:
+    #             pages = requests.get(query).json()['query']['pages']
+    #             for page_id in pages:
+    #                 page = pages[page_id]
+    #                 page_title = page['title']
+    #                 for rev in page['revisions']:
+    #                     user_text = rev['user']
+    #                     timestamp = rev['timestamp']
+    #
+    #                     dict_editor_article[user_text] = article
+    #                     if user_text in dict_editor_creators:
+    #                         dict_editor_creators[user_text] += 1
+    #                     else:
+    #                         dict_editor_creators[user_text] = 1
+    #         except Exception:
+    #             print("Errors")
+    #
+    #     import operator
+    #     sorted_x = sorted(dict_editor_creators.items(), key=operator.itemgetter(1), reverse=True)
+    #
+    #     list_editor_sorted = []
+    #     dict_editor_page_creation = {}
+    #     for (editor_text, creation_cnt) in sorted_x:
+    #         list_editor_sorted.append(editor_text)
+    #         dict_editor_page_creation[editor_text] = creation_cnt
+    #
+    #     return list_editor_sorted, dict_editor_page_creation, dict_editor_article
 
-            query = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp|user&rvdir=newer&format=json&titles="+ article
-            # query = self.url_page + page
-            try:
-                pages = requests.get(query).json()['query']['pages']
-                for page_id in pages:
-                    page = pages[page_id]
-                    page_title = page['title']
-                    for rev in page['revisions']:
-                        user_text = rev['user']
-                        timestamp = rev['timestamp']
-
-                        dict_editor_article[user_text] = article
-                        if user_text in dict_editor_creators:
-                            dict_editor_creators[user_text] += 1
-                        else:
-                            dict_editor_creators[user_text] = 1
-            except Exception:
-                print("Errors")
-
-        import operator
-        sorted_x = sorted(dict_editor_creators.items(), key=operator.itemgetter(1), reverse=True)
-
-        list_editor_sorted = []
-        dict_editor_page_creation = {}
-        for (editor_text, creation_cnt) in sorted_x:
-            list_editor_sorted.append(editor_text)
-            dict_editor_page_creation[editor_text] = creation_cnt
-
-        return list_editor_sorted, dict_editor_page_creation, dict_editor_article
 
 
-
-def main():
-    parser = PageParser()
-    # parser.extract_article_projects("")
-    # parser.extract_userboxes("")
-    # parser.is_blocked_editor("")
-    # parser.report_parser()
-    parser.identify_WIR_article_creators()
-
-main()
+# def main():
+#     parser = PageParser()
+#     # parser.extract_article_projects("")
+#     # parser.extract_userboxes("")
+#     # parser.is_blocked_editor("")
+#     # parser.report_parser()
+#     parser.identify_WIR_article_creators()
+#
+# main()
