@@ -108,6 +108,7 @@ class RecommendExperienced():
         # self.table_generator = TableGenerator()
 
         # the projects an article within the scope of - parsed from article talk pages
+        self.set_wp_admins = self.identify_wikipedia_admins()
         self.dict_article_projects = self.read_article_projects()
         self.dict_article_categories = self.read_article_categories()
 
@@ -1068,6 +1069,23 @@ class RecommendExperienced():
         for project in self.dict_project_contributors.keys():
             print("Read {} contributors for WikiProject: {}.".format(len(self.dict_project_contributors[project]),
                                                                         project))
+
+    def identify_wikipedia_admins(self):
+
+        # lists of admins
+        formal = "Wikipedia:Former_administrators/full"
+        inactive = "Wikipedia:List_of_administrators/Inactive"
+        semi_active = "Wikipedia:List_of_administrators/Semi-active"
+        active = "Wikipedia:List_of_administrators/Active"
+
+        set_wp_admins = set()
+        set_wp_admins = set_wp_admins.union(self.page_parser.WIR_member_parse_wikilinks(formal))
+        set_wp_admins = set_wp_admins.union(self.page_parser.admin_parse_templates(inactive))
+        set_wp_admins = set_wp_admins.union(self.page_parser.admin_parse_templates(semi_active))
+        set_wp_admins = set_wp_admins.union(self.page_parser.admin_parse_templates(active))
+
+        print("Identified {} wikipedia admins in total".format(len(set_wp_admins)))
+        return set_wp_admins
 
     @staticmethod
     def compute_topic_cosine_similarity(editor_vector, project_vector):

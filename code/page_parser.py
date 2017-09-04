@@ -87,6 +87,22 @@ class PageParser:
                 is_valid = True
                 wikicode = mwp.parse(page_text)
                 if page_ns == 3:
+
+                    templates = wikicode.filter_templates()
+                    for template in templates:
+                        if "block" in template:
+                            is_valid = False
+                        if "vandalism" in template:
+                            is_valid = False
+                        if "vandal" in template:
+                            is_valid = False
+                        if "disruptive" in template:
+                            is_valid = False
+                        if "uw-" in template:
+                            is_valid = False
+                        if "banned" in template:
+                            is_valid = False
+
                     comments = wikicode.filter_comments()
                     for comment in comments:
 
@@ -97,13 +113,30 @@ class PageParser:
                             is_valid = False
                         if content.contains('Template:') and content.contains('vandal'):
                             is_valid = False
+                        if content.contains('Template:') and content.contains('disruptive'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('uw-'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('banned'):
+                            is_valid = False
 
-                        # TODO: add these conditions
-                        #TODO: check [[Wikipedia:Edit warring|edit war]]
-                        #TODO: [[Wikipedia:Blocking policy|blocked]]
-                        #TODO: parse the page and skip: https://en.wikipedia.org/wiki/Wikipedia:List_of_administrators admin {{Administrator topicon}}
+                    tags = wikicode.filter_tags()
+                    for tag in tags:
+                        if "block" in tag:
+                            is_valid = False
+                        if "vandalism" in tag:
+                            is_valid = False
+                        if "vandal" in tag:
+                            is_valid = False
+                        if "disruptive" in tag:
+                            is_valid = False
+                        if "uw-" in tag:
+                            is_valid = False
+                        if "banned" in tag:
+                            is_valid = False
 
                 editor_validation[username] = is_valid
+                print("*** Invalid editors: from user page:".format(username))
 
         except KeyError:
             if "error" in response:
@@ -131,12 +164,53 @@ class PageParser:
 
                 is_valid = True
                 wikicode = mwp.parse(page_text)
+
                 if page_ns == 2:
                     templates = wikicode.filter_templates()
                     for template in templates:
-                        if template.name.contains('banned'):
+                        if "block" in template:
                             is_valid = False
-                        if template.name.contains('blocked'):
+                        if "vandalism" in template:
+                            is_valid = False
+                        if "vandal" in template:
+                            is_valid = False
+                        if "disruptive" in template:
+                            is_valid = False
+                        if "uw-" in template:
+                            is_valid = False
+                        if "banned" in template:
+                            is_valid = False
+
+                    comments = wikicode.filter_comments()
+                    for comment in comments:
+
+                        content = comment.contents
+                        if content.contains('Template:') and content.contains('block'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('vandalism'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('vandal'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('disruptive'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('uw-'):
+                            is_valid = False
+                        if content.contains('Template:') and content.contains('banned'):
+                            is_valid = False
+
+                    tags = wikicode.filter_tags()
+                    for tag in tags:
+                        if "block" in tag:
+                            is_valid = False
+                        if "vandalism" in tag:
+                            is_valid = False
+                        if "vandal" in tag:
+                            is_valid = False
+                        if "disruptive" in tag:
+                            is_valid = False
+                        if "uw-" in tag:
+                            is_valid = False
+                        if "banned" in tag:
                             is_valid = False
 
                 if not is_valid:
@@ -316,6 +390,25 @@ class PageParser:
 
         except Exception:
             print("Error when parsing WIR pages")
+
+        print("Identified {} members from the page: {}.".format(len(set_members), page))
+        return set_members
+
+    def admin_parse_templates(self, page):
+        set_members = set()
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+            pages = response['query']['pages']
+            for page in pages:
+                page_text = pages[page]['revisions'][0]['*']
+                wikicode = mwp.parse(page_text)
+                for template in wikicode.filter_templates():
+                    if template.startswith("{{user3|"):
+                        user_text = template.replace("{{user3|", "").replace("}}", "")
+                        set_members.add(user_text)
+        except Exception:
+            print("Error when parsing admins pages")
 
         print("Identified {} members from the page: {}.".format(len(set_members), page))
         return set_members
