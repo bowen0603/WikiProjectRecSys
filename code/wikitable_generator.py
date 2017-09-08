@@ -52,7 +52,7 @@ Note about Recommendation Types:
         self.users = dict()  # keeps record of all users that have been recommended, prevents duplicates
 
         self.nbr_newcomers = 4
-        self.nbr_per_alg = 3
+        self.nbr_per_alg = 4
         self.nbr_WIR = 10
 
         self.file_organizer = file_organizer
@@ -78,7 +78,7 @@ Note about Recommendation Types:
         self.dict_project_topics = self.read_file_topics()
         self.dict_project_uucf = self.read_file_uucf()
 
-        # self.dict_project_organizers = self.read_file_organizers()
+        self.dict_project_organizers = self.read_file_organizers()
 
 
     def compute_recommendation_overlaps(self):
@@ -480,51 +480,51 @@ Note about Recommendation Types:
                     del project_members[editor_text]
                     recommended_editors.add(editor_text)
 
-                # print topic based
-                nbr_editors = min(self.nbr_per_alg, len(self.dict_project_topics[project].keys()))
-                i = 0
-                while i < nbr_editors:
-                    project_members = self.dict_project_topics[project]
-                    try:
-                        editor_text = random.choice(list(project_members.keys()))
-                    except IndexError:
-                        break
+                # # print topic based
+                # nbr_editors = min(self.nbr_per_alg, len(self.dict_project_topics[project].keys()))
+                # i = 0
+                # while i < nbr_editors:
+                #     project_members = self.dict_project_topics[project]
+                #     try:
+                #         editor_text = random.choice(list(project_members.keys()))
+                #     except IndexError:
+                #         break
+                #
+                #     if editor_text in recommended_editors:
+                #         del project_members[editor_text]
+                #         continue
+                #     i += 1
+                #
+                #     str_editor_desription = self.create_message_topics(project, organizer, editor_text,
+                #                                                          self.dict_project_topics[project][
+                #                                                              editor_text])
+                #     list_editor_wikicodes.append(str_editor_desription)
+                #     self.set_editors_treatment_group.add((project, organizer, editor_text, "topic"))
+                #     del project_members[editor_text]
+                #     recommended_editors.add(editor_text)
 
-                    if editor_text in recommended_editors:
-                        del project_members[editor_text]
-                        continue
-                    i += 1
-
-                    str_editor_desription = self.create_message_topics(project, organizer, editor_text,
-                                                                         self.dict_project_topics[project][
-                                                                             editor_text])
-                    list_editor_wikicodes.append(str_editor_desription)
-                    self.set_editors_treatment_group.add((project, organizer, editor_text, "topic"))
-                    del project_members[editor_text]
-                    recommended_editors.add(editor_text)
-
-                # print bonds based
-                nbr_editors = min(self.nbr_per_alg, len(self.dict_project_bonds[project].keys()))
-                i = 0
-                while i < nbr_editors:
-                    project_members = self.dict_project_bonds[project]
-                    try:
-                        editor_text = random.choice(list(project_members.keys()))
-                    except IndexError:
-                        break
-
-                    if editor_text in recommended_editors:
-                        del project_members[editor_text]
-                        continue
-                    i += 1
-
-                    str_editor_desription = self.create_message_bonds(project, organizer, editor_text,
-                                                                         self.dict_project_bonds[project][
-                                                                             editor_text])
-                    list_editor_wikicodes.append(str_editor_desription)
-                    self.set_editors_treatment_group.add((project, organizer, editor_text, "bonds"))
-                    del project_members[editor_text]
-                    recommended_editors.add(editor_text)
+                # # print bonds based
+                # nbr_editors = min(self.nbr_per_alg, len(self.dict_project_bonds[project].keys()))
+                # i = 0
+                # while i < nbr_editors:
+                #     project_members = self.dict_project_bonds[project]
+                #     try:
+                #         editor_text = random.choice(list(project_members.keys()))
+                #     except IndexError:
+                #         break
+                #
+                #     if editor_text in recommended_editors:
+                #         del project_members[editor_text]
+                #         continue
+                #     i += 1
+                #
+                #     str_editor_desription = self.create_message_bonds(project, organizer, editor_text,
+                #                                                          self.dict_project_bonds[project][
+                #                                                              editor_text])
+                #     list_editor_wikicodes.append(str_editor_desription)
+                #     self.set_editors_treatment_group.add((project, organizer, editor_text, "bonds"))
+                #     del project_members[editor_text]
+                #     recommended_editors.add(editor_text)
 
                 # print uucf
                 nbr_editors = min(self.nbr_per_alg, len(self.dict_project_uucf[project].keys()))
@@ -669,18 +669,23 @@ Note about Recommendation Types:
 
 
     def create_newcomer_message(self, project, organizer, editor_text, editor_info):
-        user_page = "{{User | {}}}".format(editor_text)
+        user_page = "{{noping2 | {}}}".format(editor_text)
         date_regstr = datetime.strptime(editor_info['regstr_time'], "%Y-%m-%d %H:%M:%S")
         date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
         description = "{} just joined Wikipedia and made her/his first edit on {} which is in the scope of your project." \
                       "It's a strong indication that she/he will like your project. Please welcome our Wikipedia newbies!".format(editor_text,
                                                                                                                               self.article_link(editor_info['first_article']))
 
-        description = "{} just joined Wikipedia and made their first edit on an article within the scope of your project, " \
-                      "{}. This is an indication that they might be interested in working on your project. " \
-                      "Please welcome Wikipedia newbies!".format(editor_text, self.article_link(editor_info['first_article']))
+        description = "{} just joined Wikipedia and made the first edit on an article " \
+                      "within the scope of your project, {}.".format(editor_text, self.article_link(editor_info['first_article']))
 
-        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
+        rationale = "The first edit is a strong indication on editor's interest. " \
+                    "They might be interested in working on your project. " \
+                    "Their recent edits show their good editing records. " \
+                    "Please welcome Wikipedia newbies, and help them onboard!"
+        message_with_mouseover = "{{" + "H:title|{}|{}".format(rationale, description) + "}}"
+
+        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(message_with_mouseover,
                                                                                           date_regstr_str,
                                                                                           editor_info['wp_edits'],
                                                                                           self.form_editor_status(editor_info['status']),
@@ -689,17 +694,23 @@ Note about Recommendation Types:
         return str
 
     def create_message_rule(self, project, organizer, editor_text, editor_info):
-        user_page = "{{User | {}}}".format(editor_text)
+
+        # invite = "{{H:title|Please sign your signature when inviting the editor. |Invitation Status}}"
+
+        user_page = "{{noping2 | {}}}".format(editor_text)
         date_regstr = datetime.strptime(editor_info['regstr_time'], "%Y-%m-%d %H:%M:%S")
         date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
-        description = "{} made {} edits on articles within the scope of your project out of her/his most recent 500 edits. " \
-                      "Let her/him know your project. She/He will contribute more!".format(editor_text,
-                                                                                     editor_info['project_edits'])
+        description = "{} made {} out of their most recent 500 edits to " \
+                      "articles within the scope of your project. ".format(editor_text,
+                                                                      editor_info['project_edits'])
 
-        description = "{} made {} our of their most recent 500 edits to articles within the scope of your project. " \
-                      "If you invite them to your project, they will have the opportunity to contribute more!".format(editor_text, editor_info['project_edits'])
+        rationale = "These editors might not be aware of your project. " \
+                    "Their recent edits on project-related articles indicate their interest to your project. " \
+                    "Their recent edits also show their good editing records. " \
+                    "Invite them to your project. They will have the opportunity to contribute more!"
+        message_with_mouseover = "{{" + "H:title|{}|{}".format(rationale, description) + "}}"
 
-        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(description,
+        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} || {} || {}".format(message_with_mouseover,
                                                                                           date_regstr_str,
                                                                                           editor_info['wp_edits'],
                                                                                           self.form_editor_status(editor_info['status']),
@@ -707,8 +718,48 @@ Note about Recommendation Types:
                                                                                           self.form_survey_link(project, organizer, editor_text))
         return str
 
+
+    def create_message_uucf(self, project, organizer, editor_text, editor_info):
+        user_page = "{{noping2 | {}}}".format(editor_text)
+        date_regstr = datetime.strptime(editor_info['regstr_time'], "%Y-%m-%d %H:%M:%S")
+        date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
+        neighbor1 = "{{noping2 | {}}}".format(editor_info['neighbor1'])
+        # neighbor2 = "{{User | {}}}".format(editor_info['neighbor2'])
+        # description = "{} edited articles similar to the articles your project members edited. " \
+        #               "For instance, {} and project member {} edited {} articles in common.
+        # She/He will be interested in your project articles!".format(editor_text,
+        #                                                              editor_text,
+        #                                                              editor_info['neighbor1'],
+        #                                                              editor_info['common_edits'])
+
+        # description = "{} edited articles similar to articles your project members edited. " \
+        #               "For example, {} and project member {} edited {} of the same articles in their most recent 500 edits. " \
+        #               "This suggests that {} will be interested in " \
+        #               "editing your project's articles!".format(editor_text,
+        #                                                         editor_text,
+        #                                                         editor_info['neighbor1'],
+        #                                                         editor_info['common_edits'], editor_text)
+        description1 = "{} edited articles similar to articles your project members edited. " \
+                      "For example, {} and you project member ".format(editor_text, editor_text) + "{" + neighbor1 + "}"#"{{User | {}}}".format(editor_info['neighbor1'])
+        description2 = " edited {} of the same articles in their most recent 500 edits. ".format(editor_info['common_edits'])
+                      # "This suggests that {} will be interested in editing your project's articles!".format(editor_info['common_edits'], editor_text)
+        description = description1 + description2
+
+        rationale = "These editors might not be aware of your project. " \
+                    "Their recent edits that are similar to your project members indicate they will be interested in editing your project's articles. " \
+                    "Their recent edits also show their good editing records. " \
+                    "Invite them to your project. They will have the opportunity to contribute more!"
+        message_with_mouseover = "{{" + "H:title|{}|{}".format(rationale, description) + "}}"
+
+        str = "|-\n | {" + user_page + "}" + "|| " + message_with_mouseover + " || {} || {} || {} || {} || {}".format(date_regstr_str,
+                                                                                                          editor_info['wp_edits'],
+                                                                                                          self.form_editor_status(editor_info['status']),
+                                                                                                          self.form_template_link(project, editor_text),
+                                                                                                          self.form_survey_link(project, organizer, editor_text))
+        return str
+
     def create_message_bonds(self, project, organizer, editor_text, editor_info):
-        user_page = "{{User | {}}}".format(editor_text)
+        user_page = "{{noping2 | {}}}".format(editor_text)
         date_regstr = datetime.strptime(editor_info['regstr_time'], "%Y-%m-%d %H:%M:%S")
         date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
         description = "{} has strong bonds with your project members! She/He has sent over {} messages to more than {} your project members on their user talk pages. " \
@@ -730,7 +781,7 @@ Note about Recommendation Types:
         return str
 
     def create_message_topics(self, project, organizer, editor_text, editor_info):
-        user_page = "{{User | {}}}".format(editor_text)
+        user_page = "{{noping2 | {}}}".format(editor_text)
         date_regstr = datetime.strptime(editor_info['regstr_time'], "%Y-%m-%d %H:%M:%S")
         date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
         if editor_info['cate_second'] != 'None':
@@ -776,38 +827,6 @@ Note about Recommendation Types:
                                                                                           self.form_survey_link(project, organizer, editor_text))
         return str
 
-    def create_message_uucf(self, project, organizer, editor_text, editor_info):
-        user_page = "{{User | {}}}".format(editor_text)
-        date_regstr = datetime.strptime(editor_info['regstr_time'], "%Y-%m-%d %H:%M:%S")
-        date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
-        neighbor1 = "{{User | {}}}".format(editor_info['neighbor1'])
-        # neighbor2 = "{{User | {}}}".format(editor_info['neighbor2'])
-        # description = "{} edited articles similar to the articles your project members edited. " \
-        #               "For instance, {} and project member {} edited {} articles in common.
-        # She/He will be interested in your project articles!".format(editor_text,
-        #                                                              editor_text,
-        #                                                              editor_info['neighbor1'],
-        #                                                              editor_info['common_edits'])
-
-        # description = "{} edited articles similar to articles your project members edited. " \
-        #               "For example, {} and project member {} edited {} of the same articles in their most recent 500 edits. " \
-        #               "This suggests that {} will be interested in " \
-        #               "editing your project's articles!".format(editor_text,
-        #                                                         editor_text,
-        #                                                         editor_info['neighbor1'],
-        #                                                         editor_info['common_edits'], editor_text)
-        description1 = "{} edited articles similar to articles your project members edited. " \
-                      "For example, {} and project member ".format(editor_text, editor_text) + "{" + neighbor1 + "}"#"{{User | {}}}".format(editor_info['neighbor1'])
-        description2 = " edited {} of the same articles in their most recent 500 edits. " \
-                      "This suggests that {} will be interested in editing your project's articles!".format(editor_info['common_edits'], editor_text)
-        description = description1 + description2
-
-        str = "|-\n | {" + user_page + "}" + "|| " + description + " || {} || {} || {} || {} || {}".format(date_regstr_str,
-                                                                                                          editor_info['wp_edits'],
-                                                                                                          self.form_editor_status(editor_info['status']),
-                                                                                                          self.form_template_link(project, editor_text),
-                                                                                                          self.form_survey_link(project, organizer, editor_text))
-        return str
 
     def create_message_WIR(self, organizer, editor_text, editor_info):
         user_page = "{{User | {}}}".format(editor_text)
@@ -879,17 +898,17 @@ Note about Recommendation Types:
         self.execute()
         # self.execute_WIR()
 #
-# def main():
-#     from sys import argv
-#     if len(argv) != 3:
-#         print("Usage: <organizer file> <batch number>")
-#         return
-#
-#
-#     table_generator = TableGenerator(argv[1], int(argv[2]))
-#     table_generator.compute_recommendation_overlaps()
-#     table_generator.execute()
-#
-# main()
+def main():
+    from sys import argv
+    if len(argv) != 3:
+        print("Usage: <organizer file> <batch number>")
+        return
+
+
+    table_generator = TableGenerator(argv[1], int(argv[2]))
+    table_generator.compute_recommendation_overlaps()
+    table_generator.execute()
+
+main()
 
 
