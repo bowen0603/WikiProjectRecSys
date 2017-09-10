@@ -47,6 +47,10 @@ import os.path
 from random import shuffle
 import math
 
+import mwapi
+import mwreverts.api
+
+
 
 class RecommendExperienced():
     def __init__(self, argv):
@@ -113,6 +117,10 @@ class RecommendExperienced():
         self.dict_article_categories = self.read_article_categories()
 
         self.dict_project_categories = self.read_project_categories()
+
+        self.dict_newcomers_reverted = {}
+        self.dict_experienced_reverted = {}
+        self.session = mwapi.Session("https://en.wikipedia.org")
 
 
     def identify_valid_newcomers_and_experienced_editors(self):
@@ -295,6 +303,8 @@ class RecommendExperienced():
         self.write_topic_recommendations()
         self.write_uucf_recommendations()
 
+        self.write_reverts()
+
 
     def fetch_history(self, editor_list, is_newcomers):
 
@@ -315,6 +325,7 @@ class RecommendExperienced():
             # print("#{}. Retrieving and analyzing edits of editor: {}.".format(editor_cnt, editor_text))
             editor_cnt += 1
             cnt_mainpage_edits = 0
+            cnt_reverted = 0
             latest_datetime = datetime.fromordinal(1)
             current_datetime = datetime.now()
 
@@ -328,14 +339,26 @@ class RecommendExperienced():
                 query = self.url_usercontb + "uclimit=" + str(self.const_max_requests) + "&ucprop=title|timestamp|parsedcomment|flags|ids&ucuser=" + editor_text
                 response = requests.get(query).json()
 
+                edits_cnt = 0
+                edits_total = len(response['query']['usercontribs'])
 
                 for usercontrib in response['query']['usercontribs']:
 
+                    edits_cnt += 1
                     page_title = usercontrib['title']
                     page_id = usercontrib['pageid']
+                    revid = usercontrib['revid']
                     ns = usercontrib['ns']
                     userid = usercontrib['userid']
 
+
+                    # in the last 50 edits, count how many were reverted
+                    if (edits_total - edits_cnt) < 50:
+                        reverting, reverted, reverted_to = mwreverts.api.check(session, rev_id=revid, page_id=page_id)
+                        if reverted:
+                            cnt_reverted += 1
+
+                    # get revision page id and revision id
                     edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
                     latest_datetime = max(edit_datetime, latest_datetime)
                     self.dict_editor_last_edit_datetime[editor_text] = latest_datetime
@@ -347,9 +370,9 @@ class RecommendExperienced():
                         # if usercontrib['flags'] == 'minor':
                         #     continue
 
-                        if 'flags' in usercontrib:
-                            print(usercontrib['flags'])
-                            continue
+                        # if 'flags' in usercontrib:
+                        #     print(usercontrib['flags'])
+                        #     continue
 
                     if ns == 0:
                         if is_newcomers:
@@ -411,9 +434,10 @@ class RecommendExperienced():
             # handle rule-based recommendation by article page edits
             stats_edits_projects_articles = self.compute_project_article_edits(edits_ns0_articles)
             if is_newcomers:
+                self.dict_newcomers_reverted[editor_text] = cnt_reverted
                 self.maintain_project_newcomer_recommendation_lists(editor_text, stats_edits_projects_articles)
             else:
-
+                self.dict_experienced_reverted[editor_text] = cnt_reverted
                 if cnt_mainpage_edits >= self.threshold_very_active:
                     self.dict_editor_status[editor_text] = self.const_very_active
                 elif cnt_mainpage_edits >= self.threshold_active:
@@ -976,79 +1000,96 @@ class RecommendExperienced():
         fname = cwd + "/data/recommendations/recommendations_rule.csv"
 
         fout = open(fname, "w")
-        print("wikiproject**editor_text**project_edits**wp_edits**last_edit**regstr_time**status", file=fout)
+        print("wikiproject**editor_text**project_edits**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_rule_based_recommendation[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                          self.dict_rule_based_recommendation[wikiproject][editor_text],
-                                                          self.dict_editor_text_editcount[editor_text],
-                                                          self.dict_editor_last_edit_datetime[editor_text],
-                                                          self.dict_editor_regstr_time[editor_text],
-                                                          self.dict_editor_status[editor_text]), file=fout)
+                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                              self.dict_rule_based_recommendation[wikiproject][editor_text],
+                                                              self.dict_editor_text_editcount[editor_text],
+                                                              self.dict_editor_last_edit_datetime[editor_text],
+                                                              self.dict_editor_regstr_time[editor_text],
+                                                              self.dict_editor_status[editor_text],
+                                                              self.dict_experienced_reverted[editor_text]), file=fout)
 
     def write_bonds_recommendations(self):
         cwd = os.getcwd()
         fname = cwd + "/data/recommendations/recommendations_bonds.csv"
 
         fout = open(fname, "w")
-        print("wikiproject**editor_text**pjtk_cnt**talker_cnt**wp_edits**last_edit**regstr_time**status", file=fout)
+        print("wikiproject**editor_text**pjtk_cnt**talker_cnt**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_bonds_based_recommendation[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                              self.dict_bonds_based_recommendation[wikiproject][editor_text],
-                                                              self.dict_editor_project_talker_nbr[editor_text][wikiproject],
-                                                              self.dict_editor_text_editcount[editor_text],
-                                                              self.dict_editor_last_edit_datetime[editor_text],
-                                                              self.dict_editor_regstr_time[editor_text],
-                                                              self.dict_editor_status[editor_text]), file=fout)
+                print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                                  self.dict_bonds_based_recommendation[wikiproject][editor_text],
+                                                                  self.dict_editor_project_talker_nbr[editor_text][wikiproject],
+                                                                  self.dict_editor_text_editcount[editor_text],
+                                                                  self.dict_editor_last_edit_datetime[editor_text],
+                                                                  self.dict_editor_regstr_time[editor_text],
+                                                                  self.dict_editor_status[editor_text],
+                                                                  self.dict_experienced_reverted[editor_text]), file=fout)
 
     def write_topic_recommendations(self):
         cwd = os.getcwd()
         fname = cwd + "/data/recommendations/recommendations_topics.csv"
         fout = open(fname, "w")
-        print("wikiproject**editor_text**cate_first**cate_second**wp_edits**last_edit**regstr_time**status", file=fout)
+        print("wikiproject**editor_text**cate_first**cate_second**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_topic_based_recommendation[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                              self.dict_topic_editor_first_category[editor_text],
-                                                              self.dict_topic_editor_second_category[editor_text],
-                                                              self.dict_editor_text_editcount[editor_text],
-                                                              self.dict_editor_last_edit_datetime[editor_text],
-                                                              self.dict_editor_regstr_time[editor_text],
-                                                              self.dict_editor_status[editor_text]), file=fout)
+                print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                                  self.dict_topic_editor_first_category[editor_text],
+                                                                  self.dict_topic_editor_second_category[editor_text],
+                                                                  self.dict_editor_text_editcount[editor_text],
+                                                                  self.dict_editor_last_edit_datetime[editor_text],
+                                                                  self.dict_editor_regstr_time[editor_text],
+                                                                  self.dict_editor_status[editor_text],
+                                                                  self.dict_experienced_reverted[editor_text]), file=fout)
 
     def write_uucf_recommendations(self):
         cwd = os.getcwd()
         fname = cwd + "/data/recommendations/recommendations_uucf.csv"
         fout = open(fname, "w")
         # experienced_editor,wikiproject,uucf_score,pos,project_member,common_edits
-        print("wikiproject**editor_text**project_member**uucf_score**common_edits**wp_edits**last_edit**regstr_time**status", file=fout)
+        print("wikiproject**editor_text**project_member**uucf_score**common_edits**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_uucf_based_recommendation[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
-                                                                  self.dict_uucf_similar_project_member[wikiproject][editor_text],
-                                                                  self.dict_uucf_based_recommendation[wikiproject][editor_text],
-                                                                  self.dict_uucf_common_edits[wikiproject][editor_text],
-                                                                  self.dict_editor_text_editcount[editor_text],
-                                                                  self.dict_editor_last_edit_datetime[editor_text],
-                                                                  self.dict_editor_regstr_time[editor_text],
-                                                                  self.dict_editor_status[editor_text]), file=fout)
+                print("{}**{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                                                                      self.dict_uucf_similar_project_member[wikiproject][editor_text],
+                                                                      self.dict_uucf_based_recommendation[wikiproject][editor_text],
+                                                                      self.dict_uucf_common_edits[wikiproject][editor_text],
+                                                                      self.dict_editor_text_editcount[editor_text],
+                                                                      self.dict_editor_last_edit_datetime[editor_text],
+                                                                      self.dict_editor_regstr_time[editor_text],
+                                                                      self.dict_editor_status[editor_text],
+                                                                      self.dict_experienced_reverted[editor_text]), file=fout)
 
     def write_newcomer_recommendations(self):
         cwd = os.getcwd()
         fname = cwd + "/data/recommendations/recommendations_newcomers.csv"
         fout = open(fname, "w")
-        print("wikiproject**user_text**first_article**project_edits**wp_edits**last_edit**regstr_time**status",
+        print("wikiproject**user_text**first_article**project_edits**wp_edits**last_edit**regstr_time**status**reverted",
               file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
-                print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
+                print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                                   self.dict_newcomer_first_edit_article[editor_text],
                                                                   self.dict_project_newcomer_edits[wikiproject][editor_text],
                                                                   self.dict_newcomer_editcount[editor_text],
                                                                   self.dict_editor_last_edit_datetime[editor_text],
                                                                   self.dict_editor_regstr_time[editor_text],
-                                                                  "New"), file=fout)
+                                                                  "New",
+                                                                  self.dict_newcomers_reverted[editor_text]), file=fout)
+
+    def write_reverts(self):
+        cwd = os.getcwd()
+        fname = cwd + "/data/collection/reverts_experienced_editors.csv"
+        fout = open(fname, "w")
+        for editor_text in self.dict_experienced_reverted:
+            print("{}**{}".format(editor_text, self.dict_experienced_reverted[editor_text]), file=fout)
+
+        fname = cwd + "/data/collection/reverts_newcomers.csv"
+        fout = open(fname, "w")
+        for editor_text in self.dict_newcomers_reverted:
+            print("{}**{}".format(editor_text, self.dict_experienced_reverted[editor_text]), file=fout)
 
     def read_experienced_project_contributors(self):
 

@@ -62,7 +62,8 @@ Note about Recommendation Types:
         self.set_editors_control_group = set()
         self.set_recommended_editors = set()
 
-        self.survey_link = "[https://docs.google.com/forms/d/e/1FAIpQLSelCKeHVbwJTupkELLLVOsiyX8rbKn3YuTYI6eBYt6cSC2xIw/viewform?usp=pp_url&entry.253397030={}&entry.808388777={}&entry.2036239070={}&entry.1509434662 survey]"
+        # self.survey_link = "[https://docs.google.com/forms/d/e/1FAIpQLSelCKeHVbwJTupkELLLVOsiyX8rbKn3YuTYI6eBYt6cSC2xIw/viewform?usp=pp_url&entry.253397030={}&entry.808388777={}&entry.2036239070={}&entry.1509434662 survey]"
+        self.survey_link = "[https://docs.google.com/forms/d/e/1FAIpQLSdAM9iz28eh5l0tiGznlaLk4tDprU3OSs5d4PY_Xq75lG-U8w/viewform?usp=pp_url&entry.12717926={}&entry.1380059197={}&entry.661705997={}&entry.1106258057 survey]"
         self.invitation_link_exp = "[https://en.wikipedia.org/w/index.php?title=User_talk:{}&action=edit&section=new&preload=User:Bobo.03/InviteExpEditors&editintro=User:Bobo.03/Study_Intro invite] "
         self.invitation_link_newcomers = "[https://en.wikipedia.org/w/index.php?title=User_talk:{}&action=edit&section=new&preload=User:Bobo.03/InviteNewcomers&editintro=User:Bobo.03/Study_Intro invite] "
 
