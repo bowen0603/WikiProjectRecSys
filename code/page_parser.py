@@ -12,8 +12,9 @@ class PageParser:
         self.url_article = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
         self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
         self.url_page = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
-        # self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
-        # self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
+        self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
+        self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
+
 
     def extract_article_projects(self, page_title):
 
@@ -459,6 +460,36 @@ class PageParser:
             print("Error when parsing WIR pages")
 
         return list_articles
+
+
+    def WIR_parse_page_info_box(self, page):
+        # print(page)
+        try:
+            query = self.url_page + page
+            response = requests.get(query).json()
+
+            page = list(response['query']['pages'].items())[0][1]
+            page_ns = page['ns']
+            page_text = page['revisions'][0]['*']
+
+        except KeyError:
+            if "error" in response:
+                print("Error occurs when parsing article talk page. "
+                      "Code: {}; Info {}".format(response['error']['code'],
+                                                response['error']['info']))
+            return True
+
+        wikicode = mwp.parse(page_text)
+        templates = wikicode.filter_templates()
+
+        for template in templates:
+            if template.startswith("{{Infobox "):
+                import re
+                match = re.match(r"{{Infobox (.*)|.*", str(template.name), re.M | re.I)
+                info_box = match.group(0).replace("Infobox ", "").strip()
+                # print(info_box)
+                return info_box
+        return None
 
 
     # def identify_WIR_article_creators(self):

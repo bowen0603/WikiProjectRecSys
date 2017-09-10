@@ -78,7 +78,7 @@ Note about Recommendation Types:
         self.dict_project_topics = self.read_file_topics()
         self.dict_project_uucf = self.read_file_uucf()
 
-        self.dict_project_organizers = self.read_file_organizers()
+        # self.dict_project_organizers = self.read_file_organizers()
 
 
     def compute_recommendation_overlaps(self):
@@ -631,7 +631,7 @@ Note about Recommendation Types:
             print("|}", file=fout)
             print(self.message_ending, file=fout)
 
-    def create_message_WIR_group(self, editor_text, editor_info, editor_articles, month):
+    def create_message_WIR_group(self, editor_text, editor_info, infoboxes, editor_articles, month):
         user_page = "{{noping2 | {}}}".format(editor_text)
         date_regstr = datetime.strptime(editor_info['regstr_ts'], "%Y-%m-%dT%H:%M:%SZ")
         date_regstr_str = "{}-{}-{}".format(date_regstr.year, date_regstr.month, date_regstr.day)
@@ -644,20 +644,41 @@ Note about Recommendation Types:
                                                                      editor_info['page_created'],
                                                                      month,
                                                                      str_article_list)
-        str = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} ||".format(description,
+
+        description = "{} created {} WIR articles in {}".format(editor_text,
+                                                                     editor_info['page_created'],
+                                                                     month)
+
+        if infoboxes:
+            str_infoboxes_list = ""
+            for infobox, cnt in infoboxes:
+                str_infoboxes_list += infobox + ":" + str(cnt) + ", "
+
+            infobox_info = "Major occupations this editor created: {}".format(str_infoboxes_list)
+            message_with_mouseover = "{{" + "H:title|{}|{}".format(infobox_info, description) + "}}"
+
+            message_with_mouseover += ": {}".format(str_article_list)
+        else:
+            message_with_mouseover = description + ": {}".format(str_article_list)
+
+        str_message = "|-\n | {" + user_page + "}" + "|| {} || {} || {} || {} ||".format(message_with_mouseover,
                                                                               date_regstr_str,
                                                                               editor_info['editcount'],
                                                                               self.form_editor_status(editor_info['status']))
-        return str
+        return str_message
 
-    def execute_WIR_group(self, list_editors_sorted, dict_editor_info, dict_editor_articles, month):
+    def execute_WIR_group(self, list_editors_sorted, dict_editor_infoboxes, dict_editor_info, dict_editor_articles, month):
 
         list_editor_wikicodes = []
         for editor in list_editors_sorted:
             if editor not in dict_editor_info:
                 continue
-                
-            str_editor_description = self.create_message_WIR_group(editor, dict_editor_info[editor], dict_editor_articles[editor], month)
+
+            if editor in dict_editor_infoboxes:
+                infoboxes = dict_editor_infoboxes[editor]
+            else:
+                infoboxes = None
+            str_editor_description = self.create_message_WIR_group(editor, dict_editor_info[editor], infoboxes, dict_editor_articles[editor], month)
             list_editor_wikicodes.append(str_editor_description)
 
         fout = open(self.output_dir + "WIR_group_" + month + ".csv", "w")
