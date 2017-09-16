@@ -567,10 +567,10 @@ Note about Recommendation Types:
 
                 # print(self.message_ending, file=fout)
 
-            # after recommendations, the editors who are randomly left out will go into this group.
-            self.identify_control_group_editors()
-            # keep track of the editors who have been recommended to editors
-            self.write_recommendations_treatment_and_control()
+        # after recommendations, the editors who are randomly left out will go into this group.
+        self.identify_control_group_editors()
+        # keep track of the editors who have been recommended to editors
+        self.write_recommendations_treatment_and_control()
 
     def identify_control_group_editors(self):
         for project in self.sample_projects:

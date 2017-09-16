@@ -353,10 +353,14 @@ class RecommendExperienced():
 
 
                     # in the last 50 edits, count how many were reverted
-                    if (edits_total - edits_cnt) < 50:
-                        reverting, reverted, reverted_to = mwreverts.api.check(session, rev_id=revid, page_id=page_id)
-                        if reverted:
-                            cnt_reverted += 1
+                    if (edits_total - edits_cnt) < 10:
+                        try:
+                            reverting, reverted, reverted_to = mwreverts.api.check(self.session, rev_id=revid, page_id=page_id)
+                            if reverted:
+                                cnt_reverted += 1
+                        except Exception as e:
+                            print("Revert fetching error: {}".format(e))
+
 
                     # get revision page id and revision id
                     edit_datetime = datetime.strptime(usercontrib['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
@@ -438,6 +442,7 @@ class RecommendExperienced():
                 self.maintain_project_newcomer_recommendation_lists(editor_text, stats_edits_projects_articles)
             else:
                 self.dict_experienced_reverted[editor_text] = cnt_reverted
+
                 if cnt_mainpage_edits >= self.threshold_very_active:
                     self.dict_editor_status[editor_text] = self.const_very_active
                 elif cnt_mainpage_edits >= self.threshold_active:
@@ -798,9 +803,37 @@ class RecommendExperienced():
                 print("Unioned number for project: {}, {}".format(project, len(self.dict_project_contributors[project])))
 
             self.write_valid_project_contributors_to_file()
-        # todo: for project members, collect articles in their most recent 500 edits
-        self.collect_member_article_edits()
+
+
+
+        cwd = os.getcwd()
+        fname = cwd + "/data/pre-processing/member_articles.csv"
+
+        if os.path.isfile(fname):
+            self.read_project_member_article_edits(fname)
+        else:
+            self.collect_member_article_edits()
+            self.write_project_member_article_edits(fname)
         print()
+
+    def write_project_member_article_edits(self, fname):
+
+        fout = open(fname, "w")
+        print("### Writing out article edits ###")
+        for member in self.dict_member_article_edited:
+            for page in self.dict_member_article_edited[member]:
+                print("{}**{}".format(member, page), file=fout)
+
+    def read_project_member_article_edits(self, fname):
+
+        for line in open(fname, 'r'):
+            member = line.split("**")[0]
+            page = line.split("**")[1].strip()
+            if member in self.dict_member_article_edited:
+                self.dict_member_article_edited[member].add(page)
+            else:
+                self.dict_member_article_edited[member] = set()
+                self.dict_member_article_edited[member].add(page)
 
     def collect_member_article_edits(self):
 
@@ -1003,13 +1036,17 @@ class RecommendExperienced():
         print("wikiproject**editor_text**project_edits**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_rule_based_recommendation[wikiproject]:
+                try:
+                    revert_cnt = self.dict_experienced_reverted[editor_text]
+                except KeyError:
+                    revert_cnt = 0
                 print("{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                               self.dict_rule_based_recommendation[wikiproject][editor_text],
                                                               self.dict_editor_text_editcount[editor_text],
                                                               self.dict_editor_last_edit_datetime[editor_text],
                                                               self.dict_editor_regstr_time[editor_text],
                                                               self.dict_editor_status[editor_text],
-                                                              self.dict_experienced_reverted[editor_text]), file=fout)
+                                                              revert_cnt), file=fout)
 
     def write_bonds_recommendations(self):
         cwd = os.getcwd()
@@ -1019,6 +1056,11 @@ class RecommendExperienced():
         print("wikiproject**editor_text**pjtk_cnt**talker_cnt**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_bonds_based_recommendation[wikiproject]:
+                try:
+                    revert_cnt = self.dict_experienced_reverted[editor_text]
+                except KeyError:
+                    revert_cnt = 0
+
                 print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                                   self.dict_bonds_based_recommendation[wikiproject][editor_text],
                                                                   self.dict_editor_project_talker_nbr[editor_text][wikiproject],
@@ -1026,7 +1068,7 @@ class RecommendExperienced():
                                                                   self.dict_editor_last_edit_datetime[editor_text],
                                                                   self.dict_editor_regstr_time[editor_text],
                                                                   self.dict_editor_status[editor_text],
-                                                                  self.dict_experienced_reverted[editor_text]), file=fout)
+                                                                  revert_cnt), file=fout)
 
     def write_topic_recommendations(self):
         cwd = os.getcwd()
@@ -1035,6 +1077,11 @@ class RecommendExperienced():
         print("wikiproject**editor_text**cate_first**cate_second**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_topic_based_recommendation[wikiproject]:
+                try:
+                    revert_cnt = self.dict_experienced_reverted[editor_text]
+                except KeyError:
+                    revert_cnt = 0
+
                 print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                                   self.dict_topic_editor_first_category[editor_text],
                                                                   self.dict_topic_editor_second_category[editor_text],
@@ -1042,7 +1089,7 @@ class RecommendExperienced():
                                                                   self.dict_editor_last_edit_datetime[editor_text],
                                                                   self.dict_editor_regstr_time[editor_text],
                                                                   self.dict_editor_status[editor_text],
-                                                                  self.dict_experienced_reverted[editor_text]), file=fout)
+                                                                  revert_cnt), file=fout)
 
     def write_uucf_recommendations(self):
         cwd = os.getcwd()
@@ -1052,6 +1099,11 @@ class RecommendExperienced():
         print("wikiproject**editor_text**project_member**uucf_score**common_edits**wp_edits**last_edit**regstr_time**status**reverted", file=fout)
         for wikiproject in self.list_sample_projects:
             for editor_text in self.dict_uucf_based_recommendation[wikiproject]:
+                try:
+                    revert_cnt = self.dict_experienced_reverted[editor_text]
+                except KeyError:
+                    revert_cnt = 0
+
                 print("{}**{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                                       self.dict_uucf_similar_project_member[wikiproject][editor_text],
                                                                       self.dict_uucf_based_recommendation[wikiproject][editor_text],
@@ -1060,7 +1112,7 @@ class RecommendExperienced():
                                                                       self.dict_editor_last_edit_datetime[editor_text],
                                                                       self.dict_editor_regstr_time[editor_text],
                                                                       self.dict_editor_status[editor_text],
-                                                                      self.dict_experienced_reverted[editor_text]), file=fout)
+                                                                      revert_cnt), file=fout)
 
     def write_newcomer_recommendations(self):
         cwd = os.getcwd()
@@ -1070,6 +1122,12 @@ class RecommendExperienced():
               file=fout)
         for wikiproject in self.dict_project_newcomer_edits.keys():
             for editor_text in self.dict_project_newcomer_edits[wikiproject]:
+
+                try:
+                    revert_cnt = self.dict_newcomers_reverted[editor_text]
+                except KeyError:
+                    revert_cnt = 0
+
                 print("{}**{}**{}**{}**{}**{}**{}**{}**{}".format(wikiproject, editor_text,
                                                                   self.dict_newcomer_first_edit_article[editor_text],
                                                                   self.dict_project_newcomer_edits[wikiproject][editor_text],
@@ -1077,7 +1135,7 @@ class RecommendExperienced():
                                                                   self.dict_editor_last_edit_datetime[editor_text],
                                                                   self.dict_editor_regstr_time[editor_text],
                                                                   "New",
-                                                                  self.dict_newcomers_reverted[editor_text]), file=fout)
+                                                                  revert_cnt), file=fout)
 
     def write_reverts(self):
         cwd = os.getcwd()
@@ -1089,7 +1147,11 @@ class RecommendExperienced():
         fname = cwd + "/data/collection/reverts_newcomers.csv"
         fout = open(fname, "w")
         for editor_text in self.dict_newcomers_reverted:
-            print("{}**{}".format(editor_text, self.dict_experienced_reverted[editor_text]), file=fout)
+            try:
+                cnt = self.dict_experienced_reverted[editor_text]
+            except KeyError:
+                cnt = 0
+            print("{}**{}".format(editor_text, cnt), file=fout)
 
     def read_experienced_project_contributors(self):
 
