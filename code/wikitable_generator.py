@@ -79,7 +79,7 @@ Note about Recommendation Types:
         self.dict_project_topics = self.read_file_topics()
         self.dict_project_uucf = self.read_file_uucf()
 
-        # self.dict_project_organizers = self.read_file_organizers()
+        self.dict_project_organizers = self.read_file_organizers()
 
 
     def compute_recommendation_overlaps(self):
@@ -131,10 +131,10 @@ Note about Recommendation Types:
                 for line in fin:
                     if line.startswith("******"):
                         continue
-                    project = line.split(self.delimiter)[0]
-                    organizer = line.split(self.delimiter)[1]
-                    user_text = line.split(self.delimiter)[2]
-                    type = line.split(self.delimiter)[3].strip()
+                    project = line.split(",")[0]
+                    organizer = line.split(",")[1]
+                    user_text = line.split(",")[2]
+                    type = line.split(",")[3].strip()
 
                     self.set_recommended_editors.add(user_text)
 
@@ -215,12 +215,16 @@ Note about Recommendation Types:
             if user_text in self.set_recommended_editors:
                 continue
 
-            dict_user_info = {'first_article': line.split(self.delimiter)[2],
-                              'project_edits': int(line.split(self.delimiter)[3]),
-                              'wp_edits': int(line.split(self.delimiter)[4]),
-                              'last_edit': line.split(self.delimiter)[5],
-                              'regstr_time': line.split(self.delimiter)[6],
-                              'status': line.split(self.delimiter)[7].strip()}
+            try:
+                dict_user_info = {'first_article': line.split(self.delimiter)[2],
+                                  'project_edits': int(line.split(self.delimiter)[3]),
+                                  'wp_edits': int(line.split(self.delimiter)[4]),
+                                  'last_edit': line.split(self.delimiter)[5],
+                                  'regstr_time': line.split(self.delimiter)[6],
+                                  'status': line.split(self.delimiter)[7].strip()}
+            except Exception as e:
+                print(e)
+                continue
 
             if project in dict_project_newcomers:
                 recommended_newcomers = dict_project_newcomers[project]
@@ -390,8 +394,8 @@ Note about Recommendation Types:
         dict_project_organizers = {}
         filename = self.file_organizer
         for line in open(filename, "r").readlines()[1:]:
-            project = line.split(self.delimiter)[0]
-            editor_text = line.split(self.delimiter)[1].strip()
+            project = line.split('*')[0]
+            editor_text = line.split('*')[1].strip()
             if project in dict_project_organizers:
                 dict_project_organizers[project].append(editor_text)
             else:
@@ -591,18 +595,18 @@ Note about Recommendation Types:
                 self.set_editors_control_group.add((project, editor, "uucf"))
 
     def write_recommendations_treatment_and_control(self):
-        filename = "data/collection/group_treatment.csv"
+        filename = "data/collection/group_treatment2.csv"
         fout = open(filename, "a")
         for (project, organizer, editor, type) in self.set_editors_treatment_group:
-            print("{}**{}**{}**{}**{}".format(project, organizer, editor, type, self.batch_nbr), file=fout)
+            print("{}*{}*{}*{}*{}".format(project, organizer, editor, type, self.batch_nbr), file=fout)
 
         from datetime import datetime
         print("******{}".format(str(datetime.now())), file=fout)
 
-        filename = "data/collection/group_control.csv"
+        filename = "data/collection/group_control2.csv"
         fout = open(filename, "w")
         for (project, editor, type) in self.set_editors_control_group:
-            print("{}**{}**{}**{}".format(project, editor, type, self.batch_nbr), file=fout)
+            print("{}*{}*{}*{}".format(project, editor, type, self.batch_nbr), file=fout)
 
     def execute_WIR(self):
         self.dict_project_WIR = self.read_file_WIR()
