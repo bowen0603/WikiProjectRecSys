@@ -96,6 +96,7 @@ class RecommendExperienced():
         self.dict_topic_editor_second_category = {}
         self.dict_editor_status = {}
 
+        self.cutoff_newcomer_exp_version = 2
         self.exp_editor_thr = 100
 
         self.url_userinfo = "https://en.wikipedia.org/w/api.php?action=query&format=json&list=users"
@@ -259,15 +260,32 @@ class RecommendExperienced():
 
                         self.dict_editor_regstr_time[editor_text] = regstr_datetime
 
-                        # collect data for newcomers
-                        if delta_days <= self.constr_newcomer_days and editor_text not in self.list_bots:
-                            self.dict_newcomer_text_id[editor_text] = editor_id
-                            self.dict_newcomer_editcount[editor_text] = editor_editcount
+                        if self.cutoff_newcomer_exp_version == 1:
+                            # collect data for newcomers
+                            if delta_days <= self.constr_newcomer_days and editor_text not in self.list_bots:
+                                self.dict_newcomer_text_id[editor_text] = editor_id
+                                self.dict_newcomer_editcount[editor_text] = editor_editcount
 
-                        # collect data for experienced editors
-                        if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
-                            self.dict_exp_editor_text_id[editor_text] = editor_id
-                            self.dict_editor_text_editcount[editor_text] = editor_editcount
+                            # collect data for experienced editors
+                            if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
+                                self.dict_exp_editor_text_id[editor_text] = editor_id
+                                self.dict_editor_text_editcount[editor_text] = editor_editcount
+                        elif self.cutoff_newcomer_exp_version == 2:
+
+                            if editor_editcount >= self.exp_editor_thr and editor_text not in self.list_bots:
+                                # collect data for experienced editors
+                                self.dict_exp_editor_text_id[editor_text] = editor_id
+                                self.dict_editor_text_editcount[editor_text] = editor_editcount
+                            elif editor_editcount < self.exp_editor_thr and editor_text not in self.list_bots:
+                                # collect data for newcomers
+                                self.dict_newcomer_text_id[editor_text] = editor_id
+                                self.dict_newcomer_editcount[editor_text] = editor_editcount
+                            else:
+                                # must be a bot.. do nothing
+                                continue
+                        else:
+                            print("Not yet decided this condition..")
+                            return
 
                 except KeyError:
                     if self.catch_error_to_sleep(response):
