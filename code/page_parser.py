@@ -10,10 +10,9 @@ class PageParser:
 
     def __init__(self):
         self.url_article = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
-        self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
         self.url_page = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
-        self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User:"
-        self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=User talk:"
+        self.url_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
+        self.url_talk_user = "https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles="
 
 
     def extract_article_projects(self, page_title):
@@ -74,7 +73,7 @@ class PageParser:
             response = requests.get(query).json()
             pages = response['query']['pages']
             for page in pages:
-                if 'invalid' in pages[page]:
+                if 'invalid' in pages[page] or 'missing' in pages[page]:
                     continue
 
                 username = pages[page]['title'].replace("User talk:", "")
@@ -150,7 +149,7 @@ class PageParser:
             pages = response['query']['pages']
             for page in pages:
 
-                if 'invalid' in pages[page]:
+                if 'invalid' in pages[page] or 'missing' in pages[page]:
                     continue
 
                 username = pages[page]['title'].replace('User:', "")
@@ -535,6 +534,10 @@ class PageParser:
 #     # parser.extract_userboxes("")
 #     # parser.is_blocked_editor("")
 #     # parser.report_parser()
-#     parser.identify_WIR_article_creators()
+#     s = set()
+#     s.add("Wabryant99")
+#     s.add("Abbasxali")
+#     print(parser.check_editors_validation(s))
+#     # parser.identify_WIR_article_creators()
 #
 # main()

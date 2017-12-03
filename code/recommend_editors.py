@@ -96,8 +96,13 @@ class RecommendExperienced():
         self.dict_topic_editor_second_category = {}
         self.dict_editor_status = {}
 
-        self.cutoff_newcomer_exp_version = 2
+        self.dict_very_exp_text_id = {}
+        self.dict_very_exp_editcount = {}
+
+        self.cutoff_newcomer_exp_version = 3
+        self.active_editor_thr = 5
         self.exp_editor_thr = 100
+        self.very_exp_editor_thr = 1000
 
         self.url_userinfo = "https://en.wikipedia.org/w/api.php?action=query&format=json&list=users"
         self.url_usercontb = "https://en.wikipedia.org/w/api.php?action=query&format=json&list=usercontribs&"
@@ -143,6 +148,8 @@ class RecommendExperienced():
 
     def remove_blocked_or_vandal_editors(self):
         print('### Removing blocked or vandal newcomers and experienced editors ###')
+
+        # newcomers
         cnt_editor, set_editors = 0, set()
         list_editors = list(self.dict_newcomer_text_id.keys())
         for i in range(len(list_editors)):
@@ -158,6 +165,7 @@ class RecommendExperienced():
                         self.set_valid_newcomers.add(valid_editor)
                 cnt_editor, set_editors = 0, set()
 
+        # experienced editors
         cnt_editor, set_editors = 0, set()
         list_editors = list(self.dict_exp_editor_text_id.keys())
         for i in range(len(list_editors)):
@@ -172,8 +180,28 @@ class RecommendExperienced():
                     if valid_editors[valid_editor]:
                         self.set_valid_exp_editors.add(valid_editor)
                 cnt_editor, set_editors = 0, set()
-        print("#### {} valid newcomers, and {} valid experienced editors".format(len(self.set_valid_newcomers),
-                                                                                 len(self.set_valid_exp_editors)))
+
+        # very experienced editors
+        set_valid_very_exp_editors = set()
+        cnt_editor, set_editors = 0, set()
+        list_editors = list(self.dict_very_exp_text_id.keys())
+        for i in range(len(list_editors)):
+            editor_text = list_editors[i]
+            if cnt_editor < 45 and i != len(list_editors) - 1:
+                cnt_editor += 1
+                set_editors.add(editor_text)
+            else:
+                set_editors.add(editor_text)
+                valid_editors = self.page_parser.check_editors_validation(set_editors)
+                for valid_editor in valid_editors.keys():
+                    if valid_editors[valid_editor]:
+                        self.set_valid_very_exp_editors.add(valid_editor)
+                cnt_editor, set_editors = 0, set()
+
+        print("#### {} valid newcomers, {} valid experienced editors, {} valid very experienced editors".format(
+                                                                                    len(self.set_valid_newcomers),
+                                                                                    len(self.set_valid_exp_editors),
+                                                                                    len(set_valid_very_exp_editors)))
 
 
     def identify_experienced_editors(self, set_editors):
@@ -282,6 +310,25 @@ class RecommendExperienced():
                                 self.dict_newcomer_editcount[editor_text] = editor_editcount
                             else:
                                 # must be a bot.. do nothing
+                                continue
+                        elif self.cutoff_newcomer_exp_version == 3:
+                            if editor_text in self.list_bots:
+                                continue
+
+                            if editor_editcount >= self.active_editor_thr and editor_editcount > self.exp_editor_thr:
+                                # collect data for newcomers
+                                self.dict_newcomer_text_id[editor_text] = editor_id
+                                self.dict_newcomer_editcount[editor_text] = editor_editcount
+                            elif editor_editcount >= self.exp_editor_thr and editor_editcount < self.very_exp_editor_thr:
+                                # collect data for experienced editors
+                                self.dict_exp_editor_text_id[editor_text] = editor_id
+                                self.dict_editor_text_editcount[editor_text] = editor_editcount
+                            elif editor_editcount > self.very_exp_editor_thr:
+                                # collect data for very experienced editors
+                                self.dict_very_exp_text_id[editor_text] = editor_id
+                                self.dict_very_exp_editcount[editor_text] = editor_editcount
+                            else:
+                                # inactive editors (editors have fewer than 5 edits)
                                 continue
                         else:
                             print("Not yet decided this condition..")
