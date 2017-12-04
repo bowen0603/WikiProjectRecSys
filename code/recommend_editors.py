@@ -315,7 +315,7 @@ class RecommendExperienced():
                             if editor_text in self.list_bots:
                                 continue
 
-                            if editor_editcount >= self.active_editor_thr and editor_editcount > self.exp_editor_thr:
+                            if editor_editcount >= self.active_editor_thr and editor_editcount < self.exp_editor_thr:
                                 # collect data for newcomers
                                 self.dict_newcomer_text_id[editor_text] = editor_id
                                 self.dict_newcomer_editcount[editor_text] = editor_editcount
@@ -350,9 +350,10 @@ class RecommendExperienced():
                     # print("{},{},{}".format(editor_text, editor_id, editor_editcount))
 
                 cnt_editor, str_editors = 0, ""
-        print("Number of active editors: {}; experienced editors: {}; newcomers: {}".format(len(self.list_active_editors),
-                                                                                            len(self.dict_exp_editor_text_id),
-                                                                                            len(self.dict_newcomer_text_id)))
+        print("Total number of active editors: {}; "
+              "newcomers: {}; experienced editors: {}; very experineced: {}"
+              "".format(len(self.list_active_editors), len(self.dict_newcomer_text_id),
+                        len(self.dict_exp_editor_text_id), len(self.dict_very_exp_text_id)))
 
         print("##NONE registration date: {}".format(cnt_none_registration_date))
 
