@@ -195,7 +195,7 @@ class RecommendExperienced():
                 valid_editors = self.page_parser.check_editors_validation(set_editors)
                 for valid_editor in valid_editors.keys():
                     if valid_editors[valid_editor]:
-                        self.set_valid_very_exp_editors.add(valid_editor)
+                        set_valid_very_exp_editors.add(valid_editor)
                 cnt_editor, set_editors = 0, set()
 
         print("#### {} valid newcomers, {} valid experienced editors, {} valid very experienced editors".format(

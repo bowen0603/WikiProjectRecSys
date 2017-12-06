@@ -136,7 +136,8 @@ class PageParser:
                             is_valid = False
 
                 editor_validation[username] = is_valid
-                print("*** Invalid editors: {} from user page:".format(username))
+                if not is_valid:
+                    print("*** Invalid editors: {} from user page:".format(username))
 
         except KeyError:
             if "error" in response:
